@@ -1,0 +1,246 @@
+.verifyOtpCenter {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background elements */
+.verifyOtpCenter::before {
+  content: '';
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  top: -250px;
+  left: -250px;
+  animation: float 6s ease-in-out infinite;
+}
+
+.verifyOtpCenter::after {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  bottom: -200px;
+  right: -200px;
+  animation: float 8s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(20px); }
+}
+
+.container {
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.authCard {
+  border: none;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  background: white;
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.authHeader {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 50px 40px 40px;
+  text-align: center;
+  position: relative;
+}
+
+.authHeader::before {
+  content: '';
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  top: -50px;
+  right: -50px;
+}
+
+.iconCircle {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  backdrop-filter: blur(10px);
+  font-size: 36px;
+}
+
+.authHeader h3 {
+  margin: 0 0 10px 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.authHeader p {
+  margin: 0;
+  opacity: 0.95;
+  font-size: 16px;
+}
+
+.authBody {
+  padding: 40px;
+  background-color: white;
+}
+
+.otpContainer {
+  display: flex;
+  justify-content: space-between;
+  margin: 2rem 0;
+  gap: 10px;
+}
+
+.otpBox {
+  width: 55px;
+  height: 65px;
+  font-size: 1.8rem;
+  text-align: center;
+  border-radius: 12px;
+  border: 2px solid #e8e8e8;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.otpBox:focus {
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  outline: none;
+  transform: scale(1.05);
+}
+
+.otpBox:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btnPrimary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btnPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.btnPrimary:active {
+  transform: translateY(0);
+}
+
+.btnPrimary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.alert {
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.alertDanger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.resendLink {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-weight: 500;
+  transition: color 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.resendLink:hover {
+  color: var(--primary-hover);
+  text-decoration: none;
+}
+
+.resendLink:disabled {
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.countdown {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.textCenter {
+  text-align: center;
+}
+
+.mb3 {
+  margin-bottom: 1rem;
+}
+
+.me2 {
+  margin-right: 0.5rem;
+}
+
+.me1 {
+  margin-right: 0.25rem;
+}
+
+.mb0 {
+  margin-bottom: 0;
+}
+
+/* CSS Variables */
+:root {
+  --primary-color: #6a14eb;
+  --primary-light: rgba(106, 20, 235, 0.1);
+  --primary-hover: #5a10d1;
+}

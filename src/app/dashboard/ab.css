@@ -1,0 +1,1112 @@
+/* Dashboard Wrapper - Modern Design */
+.dashboardWrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf6 100%);
+    color: #212529;
+    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* =============== Navbar Styling (Match Login Modern Design) =============== */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+    padding: 10px 0;
+    backdrop-filter: blur(10px);
+    transition: transform 0.3s ease-in-out;
+    will-change: transform;
+}
+
+.navbarHidden {
+    transform: translateY(-100%);
+}
+
+/* Scroll to Top Button */
+.scrollToTopBtn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.3s ease-out forwards;
+}
+
+.scrollToTopBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+}
+
+.scrollToTopBtn:active {
+    transform: translateY(-1px);
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.navContainer {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.navbarBrand {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff !important;
+    text-decoration: none;
+}
+
+.navbarBrand img {
+    height: 40px;
+    width: auto;
+    margin-right: 10px;
+}
+
+.searchContainer {
+    flex: 1;
+    max-width: 400px;
+}
+
+.searchForm {
+    position: relative;
+    width: 100%;
+}
+
+.searchForm input {
+    width: 100%;
+    padding: 10px 40px 10px 15px;
+    border: none;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.searchForm input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.searchForm input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.searchForm button {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.navbarNav {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    list-style: none;
+    margin: 0;
+}
+
+.navItem {
+    position: relative;
+}
+
+.navLink {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff !important;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 12px;
+    padding: 10px 15px;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.navLink:hover {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.navLink.active {
+    background: rgba(255, 255, 255, 0.3);
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.navLink i {
+    font-size: 1.2rem;
+}
+
+.menuName {
+    display: none;
+}
+
+/* Dropdown Menu (Modern Design) */
+.dropdown {
+    position: relative;
+}
+
+.dropdownMenu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.2);
+    list-style: none;
+    padding: 10px 0;
+    margin-top: 8px;
+    min-width: 200px;
+    z-index: 1001;
+    animation: dropdownSlide 0.3s ease-out;
+}
+
+@keyframes dropdownSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdownItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #333 !important;
+    font-weight: 500;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.dropdownItem:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    color: #667eea !important;
+}
+
+.dropdownDivider {
+    border: none;
+    border-top: 1px solid #e8e8e8;
+    margin: 5px 0;
+}
+
+/* =============== Feed Layout (3-Column with Fixed Sidebars & Scrollable Middle) =============== */
+.feedSection {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 700px) 300px;
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 80px 20px 0;
+    height: 100vh;
+    overflow: hidden;
+    transition: padding-top 0.3s ease-in-out;
+}
+
+.feedSection.compactTop {
+    padding-top: 0;
+}
+
+.feedContainer {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem 1rem 2rem 1rem;
+    height: calc(100vh - 80px);
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar for feed container only (Elegant & Professional) */
+.feedContainer::-webkit-scrollbar {
+    width: 10px;
+}
+
+.feedContainer::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 5px 0;
+}
+
+.feedContainer::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.feedContainer::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+.sidebarLeft, 
+.sidebarRight {
+    position: sticky;
+    top: 80px;
+    height: calc(100vh - 80px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem 0.5rem 2rem 0.5rem;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar for sidebars (thinner & subtle) */
+.sidebarLeft::-webkit-scrollbar,
+.sidebarRight::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebarLeft::-webkit-scrollbar-track,
+.sidebarRight::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebarLeft::-webkit-scrollbar-thumb,
+.sidebarRight::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.sidebarLeft::-webkit-scrollbar-thumb:hover,
+.sidebarRight::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.6);
+}
+
+/* =============== Sidebar Widgets (Modern Design) =============== */
+.sidebarWidget {
+    background-color: #fff;
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.08);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.sidebarWidget:hover {
+    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.12);
+    transform: translateY(-2px);
+}
+
+.widgetTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.widgetTitle i {
+    color: #6a14eb;
+}
+
+.listUnstyled {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.trendingItem {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f3f5;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.trendingItem:last-child {
+    border-bottom: none;
+}
+
+.eventItem {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+}
+
+.eventTitle {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.eventDate {
+    color: #6c757d;
+    font-size: 0.85rem;
+}
+
+.btnRsvp {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btnRsvp:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* =============== Community Items =============== */
+.communityItem {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f3f5;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.communityItem:last-child {
+    border-bottom: none;
+}
+
+.communityItem:hover {
+    background: rgba(0,0,0,0.02);
+}
+
+.communityLink {
+    text-decoration: none;
+    color: inherit;
+}
+
+.communityAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-right: 0.75rem;
+}
+
+.communityInfo {
+    flex: 1;
+}
+
+.communityName {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #212529;
+}
+
+.communityMembers {
+    display: block;
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.btnJoin {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btnJoin:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.seeAllLink {
+    display: block;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #667eea;
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    text-decoration: none;
+}
+
+.seeAllLink:hover {
+    background: rgba(106, 20, 235, 0.1);
+}
+
+.textMuted {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* =============== Create Post Trigger (Modern Design) =============== */
+.createPostTrigger {
+    background-color: #fff;
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.08);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.createPostTrigger:hover {
+    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
+    transform: translateY(-4px);
+}
+
+.createPostInput {
+    flex: 1;
+    border-radius: 50px;
+    font-size: 1rem;
+    border: 2px solid #e8e8e8;
+    padding: 0.8rem 1.3rem;
+    background: #f8f9fa;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.createPostInput:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+/* =============== Post Cards (Modern Design) =============== */
+.postCard {
+    background-color: #fff;
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.08);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.postCard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #6a14eb, #9c27b0);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 16px 16px 0 0;
+}
+
+.postCard:hover {
+    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
+    transform: translateY(-4px);
+}
+
+.postCard:hover::before {
+    opacity: 1;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.5rem 0;
+    margin-bottom: 0.75rem;
+}
+
+.userSection {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.profilePic {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #f8f9fa;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    transition: all 0.3s ease;
+}
+
+/* Reset clickable wrappers around avatar/name to avoid dark rectangles */
+.profilePicButton,
+.usernameButton {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.profilePic:hover {
+    transform: scale(1.05);
+    border-color: #667eea;
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.25);
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.username {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #212529;
+}
+
+.postDate {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.postCircle {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.postCircle i {
+    margin-right: 0.25rem;
+}
+
+.postOptions {
+    background: none;
+    border: none;
+    color: #adb5bd;
+    cursor: pointer;
+    padding: 0.5rem;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.postOptions:hover {
+    color: #6a14eb;
+    transform: rotate(90deg);
+}
+
+.postOptionsDropdown {
+    position: relative;
+}
+
+.postDropdownMenu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    min-width: 160px;
+    overflow: hidden;
+}
+
+.dropdownItem {
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #374151;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.dropdownItem:hover {
+    background-color: #f9fafb;
+}
+
+.dropdownItem i {
+    width: 16px;
+    color: #6b7280;
+}
+
+.cardCaption {
+    padding: 0 0.5rem 0.75rem;
+    line-height: 1.6;
+}
+
+.cardCaption p {
+    margin: 0;
+}
+
+.cardImage {
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.postMedia {
+    width: 100%;
+    max-height: 500px;
+    object-fit: cover;
+    display: block;
+}
+
+/* =============== Post Actions =============== */
+.cardActions {
+    padding: 0.75rem 0.5rem;
+    border-top: 1px solid #f1f3f5;
+    display: flex;
+    gap: 1.5rem;
+}
+
+.likeBtn,
+.commentBtn {
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.likeBtn:hover,
+.commentBtn:hover {
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+}
+
+.likeBtn i,
+.commentBtn i {
+    font-size: 1.2rem;
+}
+
+.likeCount,
+.commentCount {
+    font-weight: 500;
+}
+
+/* =============== Comment Form =============== */
+.commentForm {
+    padding: 0 0.5rem 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.commentForm input {
+    flex: 1;
+    border: 1px solid #e9ecef;
+    border-radius: 50px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.commentForm input:focus {
+    border-color: #6a14eb;
+    box-shadow: 0 0 0 3px rgba(106, 20, 235, 0.1);
+}
+
+.commentForm button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    border: none;
+    color: #6a14eb;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.commentForm button:hover {
+    background: #6a14eb;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* =============== Empty Feed =============== */
+.emptyFeed {
+    text-align: center;
+    padding: 40px 20px;
+    border-radius: 12px;
+    background-color: #f8f9fa;
+    margin: 20px auto;
+}
+
+.emptyFeedIcon {
+    font-size: 60px;
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+.emptyFeed h4 {
+    color: #343a40;
+    margin-bottom: 15px;
+}
+
+.emptyFeed p {
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+.exploreLink {
+    color: #6a14eb;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.exploreLink:hover {
+    text-decoration: underline;
+}
+
+/* =============== Modal =============== */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.modalContent {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+}
+
+.modalHeader {
+    background-color: #6a14eb;
+    color: #fff;
+    padding: 1.5rem;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modalHeader h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.btnClose {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modalBody {
+    padding: 1.5rem;
+}
+
+.postTextarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    font-size: 1rem;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.postTextarea:focus {
+    outline: none;
+    border-color: #6a14eb;
+    box-shadow: 0 0 0 3px rgba(106, 20, 235, 0.1);
+}
+
+.circleSelect {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    font-size: 1rem;
+    margin-top: 1rem;
+}
+
+.circleSelect:focus {
+    outline: none;
+    border-color: #6a14eb;
+}
+
+.modalFooter {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btnPost {
+    padding: 0.75rem 2rem;
+    background: #6a14eb;
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.btnPost:hover {
+    background: #4000b0;
+    transform: translateY(-2px);
+}
+
+.loadingMessage {
+    text-align: center;
+    padding: 2rem;
+    color: #667eea;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.loadingMessage::before {
+    content: '';
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(102, 126, 234, 0.1);
+    border-top-color: #667eea;
+    border-right-color: #764ba2;
+    border-radius: 50%;
+    animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* =============== Responsive Design =============== */
+@media (max-width: 1200px) {
+    .feedSection {
+        grid-template-columns: 1fr;
+        padding: 80px 20px 20px;
+        height: auto;
+        overflow: visible;
+    }
+    
+    .sidebarLeft,
+    .sidebarRight {
+        display: none;
+    }
+    
+    .feedContainer {
+        grid-column: 1;
+        height: auto;
+        overflow: visible;
+        padding: 0;
+    }
+    
+    .dashboardWrapper {
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .navContainer {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .searchContainer {
+        display: none;
+    }
+    
+    .menuName {
+        display: none;
+    }
+    
+    .navLink {
+        flex-direction: row;
+        justify-content: center;
+        min-width: auto;
+        padding: 8px 10px;
+    }
+    
+    .navbarNav {
+        flex-wrap: nowrap;
+        gap: 0;
+        width: 100%;
+        justify-content: space-around;
+    }
+    
+    .feedSection {
+        padding: 10px 10px 80px; /* space for bottom nav */
+    }
+    
+    .postCard,
+    .createPostTrigger {
+        border-radius: 12px;
+    }
+
+    .scrollToTopBtn {
+        bottom: 80px; /* sit above bottom nav */
+        right: 20px;
+    }
+
+    .postMedia {
+        max-height: 360px;
+    }
+
+    /* Move navbar to bottom like Facebook mobile */
+    .navbar {
+        top: auto;
+        bottom: 0;
+        padding: 6px 0;
+    }
+
+    /* Hide brand on compact bottom nav */
+    .navbarBrand {
+        display: none;
+    }
+
+    /* Slide out of view downward when hidden on mobile */
+    .navbarHidden {
+        transform: translateY(100%);
+    }
+}
+
+@media (max-width: 576px) {
+    .navbar {
+        padding: 5px 0;
+    }
+    
+    .navbarBrand img {
+        height: 30px;
+    }
+    
+    .navbarBrand span {
+        font-size: 1.2rem;
+    }
+    
+    .profilePic {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .createPostTrigger .profilePic {
+        width: 45px;
+        height: 45px;
+    }
+
+    .postMedia {
+        max-height: 280px;
+    }
+}
+
+@media (max-width: 400px) {
+    .navbarBrand span {
+        display: none;
+    }
+}
+

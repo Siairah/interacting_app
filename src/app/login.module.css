@@ -1,0 +1,588 @@
+/* Simple Clean Login Page */
+
+.loginWrapper {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+.loginContainer {
+  width: 100%;
+  max-width: 400px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Left Side - Login Form */
+.loginForm {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.logoImage {
+  height: 50px;
+  width: auto;
+  object-fit: contain;
+}
+
+.formTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.formSubtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.formGroup {
+  margin-bottom: 25px;
+}
+
+.formLabel {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.inputWrapper {
+  position: relative;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #667eea;
+  font-size: 18px;
+  z-index: 1;
+}
+
+.formInput {
+  width: 100%;
+  padding: 12px 18px 12px 50px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #f9f9f9;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+}
+
+.formInput::placeholder {
+  color: #999;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 1;
+}
+
+.passwordToggle:hover {
+  color: #667eea;
+}
+
+.forgotPassword {
+  text-align: right;
+  margin-top: -15px;
+  margin-bottom: 25px;
+}
+
+.forgotPasswordLink {
+  font-size: 14px;
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.forgotPasswordLink:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 12px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.submitBtn:hover {
+  background: #5568d3;
+}
+
+.submitBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 30px 0;
+  color: #999;
+  font-size: 14px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e8e8e8;
+}
+
+.divider::before {
+  margin-right: 15px;
+}
+
+.divider::after {
+  margin-left: 15px;
+}
+
+.signupPrompt {
+  text-align: center;
+  font-size: 15px;
+  color: #666;
+}
+
+.signupLink {
+  color: #667eea;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.signupLink:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.errorMessage {
+  background: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Right Side - Welcome Section */
+.loginImage {
+  display: none;
+}
+
+/* Social Login (Optional) */
+.socialLogin {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.socialBtn {
+  flex: 1;
+  padding: 12px;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+}
+
+.socialBtn:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+  transform: translateY(-2px);
+}
+
+/* Mobile Responsive - No Scrolling Required */
+@media (max-width: 768px) {
+  .loginWrapper {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .loginContainer {
+    flex-direction: column;
+    max-width: 100%;
+    margin: 0;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
+  .loginForm {
+    padding: 30px 25px;
+    order: 2;
+  }
+
+  .loginImage {
+    padding: 25px 25px 20px;
+    order: 1;
+    min-height: auto;
+  }
+  
+  /* Compact welcome section on mobile */
+  .loginImage::before {
+    display: none;
+  }
+
+  .logo {
+    margin-bottom: 20px;
+  }
+
+  .logoIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .logoText {
+    font-size: 22px;
+  }
+
+  .formTitle {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .formSubtitle {
+    font-size: 14px;
+    margin-bottom: 25px;
+  }
+
+  .welcomeTitle {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+
+  .welcomeSubtitle {
+    font-size: 14px;
+    margin-bottom: 25px;
+  }
+
+  .welcomeIcon {
+    width: 70px;
+    height: 70px;
+    font-size: 35px;
+    margin-bottom: 20px;
+  }
+
+  .features {
+    display: none;
+  }
+
+  .formGroup {
+    margin-bottom: 20px;
+  }
+
+  .divider {
+    margin: 20px 0;
+  }
+}
+
+/* iPhone and Small Mobile Devices */
+@media (max-width: 480px) {
+  .loginWrapper {
+    padding: 0;
+  }
+
+  .loginForm {
+    padding: 25px 20px;
+  }
+
+  .loginImage {
+    padding: 25px 20px;
+  }
+
+  .logo {
+    margin-bottom: 15px;
+  }
+
+  .logoIcon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .logoText {
+    font-size: 20px;
+  }
+
+  .formTitle {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .formSubtitle {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .welcomeTitle {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .welcomeSubtitle {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .welcomeIcon {
+    width: 60px;
+    height: 60px;
+    font-size: 30px;
+    margin-bottom: 15px;
+  }
+
+  .formGroup {
+    margin-bottom: 18px;
+  }
+
+  .formInput {
+    padding: 14px 45px 14px 45px;
+    font-size: 14px;
+  }
+
+  .submitBtn {
+    padding: 14px;
+    font-size: 15px;
+  }
+
+  .divider {
+    margin: 18px 0;
+    font-size: 13px;
+  }
+
+  .signupPrompt {
+    font-size: 14px;
+  }
+
+  .signupCta {
+    font-size: 14px;
+  }
+}
+
+/* Extra Small Devices (iPhone SE, small Androids) - NO SCROLL */
+@media (max-width: 375px) {
+  .loginContainer {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .loginForm {
+    padding: 20px 15px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .loginImage {
+    padding: 20px 15px;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    margin-bottom: 12px;
+  }
+
+  .formTitle {
+    font-size: 20px;
+    margin-bottom: 5px;
+  }
+
+  .formSubtitle {
+    font-size: 12px;
+    margin-bottom: 18px;
+  }
+
+  .welcomeTitle {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .welcomeSubtitle {
+    font-size: 12px;
+    margin-bottom: 15px;
+  }
+
+  .welcomeIcon {
+    width: 50px;
+    height: 50px;
+    font-size: 26px;
+    margin-bottom: 12px;
+  }
+
+  .formGroup {
+    margin-bottom: 15px;
+  }
+
+  .formInput {
+    padding: 12px 40px 12px 40px;
+    font-size: 14px;
+  }
+
+  .inputIcon {
+    left: 14px;
+    font-size: 16px;
+  }
+
+  .passwordToggle {
+    right: 14px;
+    font-size: 16px;
+  }
+
+  .submitBtn {
+    padding: 13px;
+    font-size: 14px;
+  }
+
+  .divider {
+    margin: 15px 0;
+    font-size: 12px;
+  }
+
+  .signupPrompt,
+  .signupCta {
+    font-size: 13px;
+  }
+
+  .forgotPassword {
+    margin-top: -10px;
+    margin-bottom: 15px;
+  }
+}
+
+/* iPhone 12/13/14 Pro Max and similar */
+@media (max-width: 428px) and (min-height: 800px) {
+  .loginForm {
+    padding: 25px 20px;
+  }
+
+  .loginImage {
+    padding: 25px 20px;
+  }
+}
+
+/* Landscape Mode on Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .loginWrapper {
+    min-height: auto;
+    padding: 10px 0;
+  }
+
+  .loginContainer {
+    min-height: auto;
+    flex-direction: row;
+  }
+
+  .loginImage {
+    display: none; /* Hide welcome section in landscape */
+  }
+
+  .loginForm {
+    order: 1;
+    padding: 20px;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
+
+/* Loading Spinner */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Success Message */
+.successMessage {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

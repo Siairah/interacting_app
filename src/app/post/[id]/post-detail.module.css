@@ -1,0 +1,859 @@
+/* Post Detail Page - Modern Professional Design (Match Dashboard & Circle) */
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 90px 20px 40px 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf6 100%);
+  min-height: 100vh;
+  transition: padding-top 0.2s ease-in-out;
+}
+
+.compactTop {
+  padding-top: 72px; /* slightly tighter when navbar hidden to avoid visible cut */
+}
+
+/* Modern Navbar - Match Dashboard Design */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  padding: 0;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s ease-in-out;
+  will-change: transform;
+}
+
+.navbarHidden {
+  transform: translateY(-100%);
+}
+
+.navContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pageTitle {
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+  flex: 1;
+}
+
+/* Reset buttons used for profile navigation to avoid dark blocks */
+.profilePicButton,
+.userNameButton {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.userNameButton:hover .userName {
+  text-decoration: underline;
+}
+
+.backButton,
+.homeButton {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.backButton:hover,
+.homeButton:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 20px;
+  text-align: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(102, 126, 234, 0.2);
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loadingContainer p {
+  color: #667eea;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  background: white;
+  border: none;
+  border-radius: 16px;
+  margin: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.errorContainer h2 {
+  color: #667eea;
+  margin-bottom: 16px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.errorContainer p {
+  color: #6c757d;
+  margin-bottom: 30px;
+  font-size: 16px;
+}
+
+.errorContainer .backButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.errorContainer .backButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Post Card - Modern Professional Design */
+.postCard {
+  background: white;
+  border: none;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.postCard:hover {
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Post Header */
+.postHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.profilePic {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 3px solid #e9ecef;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.profilePic:hover {
+  transform: scale(1.1);
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.userName {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #212529;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.userName:hover {
+  color: #667eea;
+  text-decoration: underline;
+}
+
+.postDate {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.postCircle {
+  margin-top: 4px;
+}
+
+.circleLink {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s ease;
+}
+
+.circleLink:hover {
+  color: #0056b3;
+}
+
+.postOptions {
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.postOptions:hover {
+  background-color: #f8f9fa;
+}
+
+/* Post Content */
+.postCaption {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #333;
+  word-wrap: break-word;
+}
+
+/* Media Container */
+.mediaContainer {
+  position: relative;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+.postMediaCarousel {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
+.carouselItem {
+  display: none;
+  width: 100%;
+}
+
+.carouselItem.active {
+  display: block;
+}
+
+.postMedia {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.carouselControls {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  pointer-events: none;
+}
+
+.carouselPrev,
+.carouselNext {
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+  transition: background-color 0.2s ease;
+}
+
+.carouselPrev:hover,
+.carouselNext:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.carouselIndicators {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  pointer-events: all;
+  transition: background-color 0.2s ease;
+}
+
+.indicator.active {
+  background: white;
+}
+
+/* Post Actions - Modern Design */
+.postActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px 0;
+  border-top: 1px solid #e9ecef;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.likeBtn,
+.commentBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 25px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #495057;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  font-weight: 500;
+}
+
+.likeBtn:hover {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+  border-color: #ff4757;
+  color: #ff4757;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.2);
+}
+
+.commentBtn:hover {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.likeCount,
+.commentCount {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Likers Names */
+.likerNames {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
+}
+
+.likerNames:hover {
+  color: #333;
+}
+
+/* Comments Section - Modern Design */
+.commentsSection {
+  margin-top: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e9ecef;
+}
+
+.commentsSection h5 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #212529;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.commentsSection h5::before {
+  content: '💬';
+  font-size: 20px;
+}
+
+.commentList {
+  margin-bottom: 16px;
+}
+
+.comment {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.comment:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  transform: translateX(4px);
+}
+
+.comment:last-child {
+  margin-bottom: 0;
+}
+
+.commentPicContainer {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.commentPic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.commentPic:hover {
+  transform: scale(1.1);
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.commentBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.commentUsername {
+  background: none;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 4px;
+  transition: color 0.2s ease;
+}
+
+.commentUsername:hover {
+  color: #007bff;
+}
+
+.commentText {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #333;
+  word-wrap: break-word;
+}
+
+.commentTime {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* More Comments - Modern Design */
+.moreCommentsContainer {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.moreCommentsBtn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.moreCommentsBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Comment Form - Modern Design */
+.commentForm {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 20px 0 0 0;
+  border-top: 2px solid #e9ecef;
+  margin-top: 20px;
+}
+
+.commentInput {
+  flex: 1;
+  padding: 12px 18px;
+  border: 2px solid #e9ecef;
+  border-radius: 25px;
+  font-size: 14px;
+  outline: none;
+  background: white;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  font-family: inherit;
+}
+
+.commentInput:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  background: #fafbfc;
+}
+
+.commentInput::placeholder {
+  color: #adb5bd;
+}
+
+.submitComment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.submitComment:hover:not(:disabled) {
+  transform: scale(1.1) rotate(15deg);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.submitComment:disabled {
+  background: linear-gradient(135deg, #adb5bd 0%, #6c757d 100%);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+/* Modal - Modern Design */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: white;
+  border-radius: 20px;
+  max-width: 450px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  border-bottom: 2px solid #e9ecef;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #212529;
+}
+
+.modalClose {
+  background: rgba(102, 126, 234, 0.1);
+  border: none;
+  font-size: 18px;
+  color: #667eea;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.modalClose:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: rotate(90deg);
+}
+
+.modalBody {
+  padding: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.likerList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.likerItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.likerItem:hover {
+  background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.likerItem:last-child {
+  margin-bottom: 0;
+}
+
+.likerPic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.likerItem:hover .likerPic {
+  border-color: #667eea;
+  transform: scale(1.05);
+}
+
+/* Responsive Design - Mobile Optimized */
+@media (max-width: 768px) {
+  .container {
+    padding: 80px 12px 20px 12px;
+  }
+
+  .navbar {
+    height: 60px;
+  }
+
+  .navContainer {
+    padding: 0 12px;
+  }
+
+  .pageTitle {
+    font-size: 16px;
+  }
+
+  .backButton,
+  .homeButton {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  .postCard {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .profilePic {
+    width: 44px;
+    height: 44px;
+    border-width: 2px;
+  }
+  
+  .userName {
+    font-size: 15px;
+  }
+  
+  .postCaption {
+    font-size: 14px;
+  }
+  
+  .postActions {
+    gap: 12px;
+    padding: 12px 0;
+  }
+
+  .likeBtn,
+  .commentBtn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  
+  .commentsSection {
+    padding: 16px;
+  }
+
+  .commentsSection h5 {
+    font-size: 16px;
+  }
+
+  .comment {
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+  }
+  
+  .commentPic {
+    width: 36px;
+    height: 36px;
+    border-width: 2px;
+  }
+  
+  .commentForm {
+    gap: 8px;
+    padding: 16px 0 0 0;
+  }
+
+  .commentInput {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  
+  .submitComment {
+    width: 40px;
+    height: 40px;
+  }
+
+  .modalContent {
+    max-width: 95%;
+    border-radius: 16px;
+  }
+
+  .modalHeader {
+    padding: 16px;
+  }
+
+  .modalTitle {
+    font-size: 18px;
+  }
+}

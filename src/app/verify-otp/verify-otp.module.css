@@ -1,0 +1,231 @@
+/* ===============================
+    PAGE WRAPPER
+=============================== */
+.otp-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+/* ===============================
+    CARD
+=============================== */
+.otp-card {
+  width: 100%;
+  max-width: 450px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 40px 32px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  animation: fadeIn 0.4s ease-out;
+  text-align: center;
+}
+
+/* LOGO */
+.logo img {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 20px;
+}
+
+/* TITLES */
+.otp-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 6px;
+}
+
+.otp-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 25px;
+}
+
+/* ===============================
+    OTP INPUT BOXES
+=============================== */
+.otp-form {
+  width: 100%;
+}
+
+.otp-boxes {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.otp-box {
+  width: 48px;
+  height: 55px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  transition: all 0.2s ease;
+}
+
+.otp-box:focus {
+  outline: none;
+  border-color: #667eea;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(102, 126, 234, 0.3);
+}
+
+/* ERROR MESSAGE */
+.otp-error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #f5c6cb;
+  margin-bottom: 15px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+
+/* ===============================
+    SUBMIT BUTTON
+=============================== */
+.otp-submit {
+  width: 100%;
+  padding: 14px;
+  background: #667eea;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 5px;
+  transition: background 0.2s ease;
+}
+
+.otp-submit:hover {
+  background: #5568d3;
+}
+
+.otp-submit:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* BACK LINK */
+.otp-back {
+  display: block;
+  margin-top: 18px;
+  font-size: 14px;
+  color: #667eea;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.otp-back:hover {
+  text-decoration: underline;
+}
+
+/* ===============================
+    PROGRESS BAR
+=============================== */
+.otp-progress {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 28px;
+  gap: 16px;
+}
+
+.progress-step {
+  text-align: center;
+}
+
+.progress-step .circle {
+  width: 12px;
+  height: 12px;
+  background: #ddd;
+  border-radius: 50%;
+  margin: 0 auto 4px auto;
+}
+
+.progress-step .label {
+  font-size: 12px;
+  color: #777;
+  font-weight: 500;
+}
+
+.progress-step.completed .circle {
+  background: #667eea;
+}
+
+.progress-step.active .circle {
+  background: #667eea;
+  width: 14px;
+  height: 14px;
+}
+
+.progress-line {
+  width: 40px;
+  height: 2px;
+  background: #ddd;
+}
+
+.progress-line.completed {
+  background: #667eea;
+}
+
+/* ===============================
+    ANIMATION
+=============================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===============================
+    MOBILE RESPONSIVE
+=============================== */
+@media (max-width: 480px) {
+  .otp-card {
+    padding: 30px 24px;
+  }
+
+  .otp-title {
+    font-size: 22px;
+  }
+
+  .otp-box {
+    width: 42px;
+    height: 50px;
+    font-size: 18px;
+  }
+
+  .progress-line {
+    width: 25px;
+  }
+}
+
+@media (max-width: 360px) {
+  .otp-box {
+    width: 38px;
+    height: 46px;
+  }
+
+  .otp-card {
+    padding: 24px 20px;
+  }
+}

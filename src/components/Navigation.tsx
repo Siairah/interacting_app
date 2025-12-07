@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import NotificationBell from "./NotificationBell";
 import styles from "./Navigation.module.css";
 
 interface UserProfile {
@@ -21,19 +22,30 @@ export default function Navigation({ isHidden = false }: NavigationProps) {
   const pathname = usePathname();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        const userData = JSON.parse(userStr);
-        const userWithProfile = {
-          ...userData,
-          profilePic: userData.profilePic || userData.profile_pic || "/images/default_profile.png",
-          fullName: userData.fullName || userData.full_name || "User"
-        };
-        setUser(userWithProfile);
-      }
+      const loadUser = async () => {
+        // Use Socket.IO first, then fallback
+        const { ensureAuth } = await import('@/utils/socketAuth');
+        const { userData } = await ensureAuth();
+        
+        if (userData) {
+          const userWithProfile = {
+            ...userData,
+            profilePic: userData.profilePic || userData.profile_pic || "/images/default_profile.png",
+            fullName: userData.fullName || userData.full_name || "User"
+          };
+          setUser(userWithProfile);
+          setUserId(userData.id || userData._id || null);
+        } else {
+          setUser(null);
+          setUserId(null);
+        }
+      };
+      
+      loadUser();
     }
   }, []);
 
@@ -49,8 +61,22 @@ export default function Navigation({ isHidden = false }: NavigationProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  function handleLogout() {
+  async function handleLogout() {
     if (typeof window !== "undefined") {
+      // Clear tab-specific Socket.IO auth
+      const { disconnectSocket } = await import('@/utils/socketAuth');
+      disconnectSocket();
+      
+      // Clear tab-specific sessionStorage
+      const tabId = sessionStorage.getItem('socket_tab_id');
+      if (tabId) {
+        sessionStorage.removeItem(`tab_auth_token_${tabId}`);
+        sessionStorage.removeItem(`tab_user_id_${tabId}`);
+        sessionStorage.removeItem(`tab_user_data_${tabId}`);
+        sessionStorage.removeItem('socket_tab_id');
+      }
+      
+      // Clear localStorage (for any fallback)
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user");
     }
@@ -114,13 +140,7 @@ export default function Navigation({ isHidden = false }: NavigationProps) {
             </Link>
           </li>
           <li className={styles.navItem}>
-            <Link 
-              href="#" 
-              className={`${styles.navLink} ${isActive('/notifications') ? styles.active : ''}`}
-            >
-              <i className="fas fa-bell"></i>
-              <span className={styles.menuName}>Notifications</span>
-            </Link>
+            <NotificationBell userId={userId} />
           </li>
           <li className={`${styles.navItem} ${styles.dropdown} user-menu-container`}>
             <button 

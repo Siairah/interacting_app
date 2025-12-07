@@ -1,0 +1,191 @@
+/* Comment Modal - Modern Popup Design */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  animation: fadeIn 0.2s ease;
+  padding: 20px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modalContent {
+  background: white;
+  border-radius: 20px;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 2px solid #e9ecef;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #212529;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modalTitle::before {
+  content: '💬';
+  font-size: 24px;
+}
+
+.commentCountBadge {
+  font-weight: 500;
+  color: #6c757d;
+  font-size: 18px;
+  margin-left: 4px;
+}
+
+.closeButton {
+  background: rgba(102, 126, 234, 0.1);
+  border: none;
+  font-size: 20px;
+  color: #667eea;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  flex-shrink: 0;
+}
+
+.closeButton:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: rotate(90deg) scale(1.1);
+  color: #5568d3;
+}
+
+.closeButton:active {
+  transform: rotate(90deg) scale(0.95);
+}
+
+.modalBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+}
+
+.postContentSection {
+  padding: 20px 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e9ecef;
+  margin-bottom: 0;
+}
+
+.postCaption {
+  margin: 12px 0 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #333;
+  word-wrap: break-word;
+}
+
+.commentsWrapper {
+  flex: 1;
+  min-height: 0;
+  background: #ffffff;
+}
+
+.modalBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modalBody::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.modalBody::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.modalBody::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
+}
+
+/* Smooth scrolling */
+.modalBody {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modalOverlay {
+    padding: 10px;
+  }
+
+  .modalContent {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 16px;
+  }
+
+  .modalHeader {
+    padding: 16px 20px;
+  }
+
+  .modalTitle {
+    font-size: 18px;
+  }
+
+  .closeButton {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+}
+

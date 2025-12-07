@@ -15,6 +15,21 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Check if user is already logged in (using Socket.IO)
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { ensureAuth } = await import('@/utils/socketAuth');
+      const { token, userId } = await ensureAuth();
+      
+      // If already logged in, redirect to dashboard
+      if (token && userId) {
+        router.replace('/dashboard');
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
+
   useEffect(() => {
     const message = searchParams.get("message");
     if (message) {
@@ -42,12 +57,34 @@ export default function LoginPage() {
         throw new Error(data.message || "Login failed");
       }
 
-      // Save JWT token + user info
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // Initialize Socket.IO and register this tab's authentication
+      const { initSocketAuth, registerTabAuth } = await import('@/utils/socketAuth');
+      const socket = initSocketAuth();
+      
+      // Register tab with Socket.IO (this also sets sessionStorage synchronously)
+      // Wait a bit for registration to complete
+      try {
+        await Promise.race([
+          registerTabAuth(data.user.id, data.token, data.user),
+          new Promise((resolve) => setTimeout(resolve, 500)) // Max 500ms wait
+        ]);
+      } catch (err) {
+        console.warn('Tab registration warning:', err);
+        // Continue anyway - sessionStorage is enough
+      }
+      
+      // Verify sessionStorage was set
+      const tabId = sessionStorage.getItem('socket_tab_id');
+      if (tabId) {
+        const storedToken = sessionStorage.getItem(`tab_auth_token_${tabId}`);
+        const storedUserId = sessionStorage.getItem(`tab_user_id_${tabId}`);
+        console.log('✅ Auth stored in sessionStorage:', { tabId, hasToken: !!storedToken, hasUserId: !!storedUserId });
+      }
+      
+      console.log('✅ Login successful, redirecting...');
 
-      // Redirect to dashboard
-      router.push("/dashboard");
+      // Force navigation using window.location to ensure it happens
+      window.location.href = "/dashboard";
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

@@ -114,8 +114,8 @@ export default function Navigation({ isHidden = false }: NavigationProps) {
           </li>
           <li className={styles.navItem}>
             <Link 
-              href="/messenger" 
-              className={`${styles.navLink} ${isActive('/messenger') ? styles.active : ''}`}
+              href="/chat" 
+              className={`${styles.navLink} ${isActive('/chat') ? styles.active : ''}`}
             >
               <i className="fas fa-comment-dots"></i>
               <span className={styles.menuName}>Messenger</span>

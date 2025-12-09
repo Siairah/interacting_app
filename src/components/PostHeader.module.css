@@ -1,0 +1,139 @@
+/* Post Header */
+.postHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.userInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.profilePicButton {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.profilePic {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 3px solid #e9ecef;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.profilePic:hover {
+  transform: scale(1.1);
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.userNameButton {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.userNameButton:hover .userName {
+  text-decoration: underline;
+}
+
+.userName {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #212529;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.userName:hover {
+  color: #667eea;
+  text-decoration: underline;
+}
+
+.postDate {
+  margin: 2px 0 0 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.postCircle {
+  margin-top: 4px;
+}
+
+.circleLink {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s ease;
+}
+
+.circleLink:hover {
+  color: #0056b3;
+}
+
+.postOptions {
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.optionsButton {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.optionsButton:hover {
+  background-color: #f8f9fa;
+}
+
+/* Responsive Design - Mobile Optimized */
+@media (max-width: 768px) {
+  .profilePic {
+    width: 44px;
+    height: 44px;
+    border-width: 2px;
+  }
+
+  .userName {
+    font-size: 15px;
+  }
+}
+

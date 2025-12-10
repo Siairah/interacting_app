@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import NotificationBell from "./NotificationBell";
+import { getChatRooms } from "@/utils/chatApi";
+import { getSocket } from "@/utils/socketAuth";
 import styles from "./Navigation.module.css";
 
 interface UserProfile {
@@ -23,6 +25,7 @@ export default function Navigation({ isHidden = false }: NavigationProps) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -48,6 +51,58 @@ export default function Navigation({ isHidden = false }: NavigationProps) {
       loadUser();
     }
   }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const loadUnreadCount = async () => {
+      try {
+        const rooms = await getChatRooms(userId);
+        const totalUnread = rooms.reduce((sum, room) => sum + (room.unread_count || 0), 0);
+        setUnreadMessageCount(totalUnread);
+      } catch (error) {
+        console.error('Error loading unread count:', error);
+      }
+    };
+
+    loadUnreadCount();
+
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleNewMessage = (msg: any) => {
+      if (msg.room && msg.sender?.id !== userId) {
+        setUnreadMessageCount((prev) => prev + 1);
+      }
+    };
+
+    const handleUnreadUpdate = (data: { room_id: string; unread_count: number }) => {
+      loadUnreadCount();
+    };
+
+    const handleGroupCreated = () => {
+      loadUnreadCount();
+    };
+
+    const handleDMCreated = () => {
+      loadUnreadCount();
+    };
+
+    socket.on('new_message', handleNewMessage);
+    socket.on('unread_update', handleUnreadUpdate);
+    socket.on('group_created', handleGroupCreated);
+    socket.on('dm_created', handleDMCreated);
+
+    const interval = setInterval(loadUnreadCount, 30000);
+
+    return () => {
+      socket.off('new_message', handleNewMessage);
+      socket.off('unread_update', handleUnreadUpdate);
+      socket.off('group_created', handleGroupCreated);
+      socket.off('dm_created', handleDMCreated);
+      clearInterval(interval);
+    };
+  }, [userId, pathname]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -119,6 +174,9 @@ export default function Navigation({ isHidden = false }: NavigationProps) {
             >
               <i className="fas fa-comment-dots"></i>
               <span className={styles.menuName}>Messenger</span>
+              {unreadMessageCount > 0 && (
+                <span className={styles.messageBadge}>{unreadMessageCount > 99 ? '99+' : unreadMessageCount}</span>
+              )}
             </Link>
           </li>
           <li className={styles.navItem}>

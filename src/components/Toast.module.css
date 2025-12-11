@@ -1,0 +1,138 @@
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  min-width: 300px;
+  max-width: 400px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  animation: slideIn 0.3s ease-out;
+  overflow: hidden;
+  border-left: 4px solid #667eea;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toastContent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.toastMessage {
+  flex: 1;
+  font-size: 14px;
+  color: #2c3e50;
+  line-height: 1.5;
+}
+
+.toastClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #7f8c8d;
+  font-size: 16px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.toastClose:hover {
+  color: #2c3e50;
+}
+
+.toast i {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.toast.success {
+  border-left-color: #28a745;
+}
+
+.toast.success i {
+  color: #28a745;
+}
+
+.toast.error {
+  border-left-color: #dc3545;
+}
+
+.toast.error i {
+  color: #dc3545;
+}
+
+.toast.warning {
+  border-left-color: #f39c12;
+}
+
+.toast.warning i {
+  color: #f39c12;
+}
+
+.toast.info {
+  border-left-color: #667eea;
+}
+
+.toast.info i {
+  color: #667eea;
+}
+
+.toastProgress {
+  height: 3px;
+  background: rgba(0, 0, 0, 0.1);
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.toastProgress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: currentColor;
+  animation: progress 5s linear forwards;
+}
+
+.toast.success .toastProgress::after {
+  background: #28a745;
+}
+
+.toast.error .toastProgress::after {
+  background: #dc3545;
+}
+
+.toast.warning .toastProgress::after {
+  background: #f39c12;
+}
+
+.toast.info .toastProgress::after {
+  background: #667eea;
+}
+
+@keyframes progress {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+

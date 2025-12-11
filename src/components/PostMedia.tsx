@@ -35,14 +35,10 @@ export default function PostMedia({ mediaFiles, postId }: PostMediaProps) {
             className={`${styles.carouselItem} ${index === activeIndex ? styles.active : ''}`}
           >
             {media.type === 'video' ? (
-              <video 
-                controls 
-                className={styles.postMedia}
-                style={{ width: '100%', maxHeight: '400px', height: 'auto', objectFit: 'contain', borderRadius: '12px' }}
-              >
-                <source src={media.file} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              <div className={styles.videoPlaceholder} style={{ width: '100%', maxHeight: '400px', height: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: '12px' }}>
+                <i className="fas fa-video" style={{ fontSize: '48px', color: '#999', marginBottom: '10px' }}></i>
+                <p style={{ color: '#999' }}>Video playback not supported</p>
+              </div>
             ) : (
               <img src={media.file} alt="Post Media" className={styles.postMedia} />
             )}

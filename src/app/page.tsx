@@ -86,7 +86,8 @@ export default function LoginPage() {
       // Force navigation using window.location to ensure it happens
       window.location.href = "/dashboard";
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      setError(sanitizeErrorMessage(err));
     } finally {
       setLoading(false);
     }

@@ -706,6 +706,15 @@
     background-color: #f9fafb;
 }
 
+.textDanger {
+    color: #dc3545 !important;
+}
+
+.textDanger:hover {
+    background: #f8f9fa;
+    color: #dc3545 !important;
+}
+
 .dropdownItem i {
     width: 16px;
     color: #6b7280;

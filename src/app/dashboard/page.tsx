@@ -3,6 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Navigation from "@/components/Navigation";
+import PostCard from "@/components/PostCard";
+import ReportPostModal from "@/components/ReportPostModal";
+import ViewPostModal from "@/components/ViewPostModal";
+import { Post } from "@/components/types";
 import styles from "./dashboard.module.css";
 
 interface UserProfile {
@@ -12,26 +17,6 @@ interface UserProfile {
   bio?: string;
   profilePic?: string;
   hasProfile?: boolean;
-}
-
-interface Post {
-  id: string;
-  content: string;
-  created_at: string;
-  user: {
-    id: string;
-    email: string;
-    full_name: string;
-    profile_pic: string;
-  };
-  circle?: {
-    id: string;
-    name: string;
-  };
-  media_files: { file: string; type: string }[];
-  like_count: number;
-  user_liked: boolean;
-  comment_count: number;
 }
 
 interface Circle {
@@ -54,8 +39,11 @@ export default function DashboardPage() {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [postContent, setPostContent] = useState("");
   const [selectedCircle, setSelectedCircle] = useState<string | null>(null);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [showPostMenu, setShowPostMenu] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showViewPostModal, setShowViewPostModal] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [hiddenPosts, setHiddenPosts] = useState<Set<string>>(new Set());
 
   // Hide-on-scroll navbar state
   const [isNavHidden, setIsNavHidden] = useState(false);
@@ -67,36 +55,31 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const userStr = localStorage.getItem("user");
-      const token = localStorage.getItem("auth_token");
+      const loadUser = async () => {
+        // Use Socket.IO first, then fallback
+        const { ensureAuth } = await import('@/utils/socketAuth');
+        const { token, userId, userData } = await ensureAuth();
+        
+        if (!token || !userId) {
+          // No authentication - redirect to login
+          router.replace('/');
+          return;
+        }
+        
+        // Use user data (from Socket.IO or fallback)
+        if (userData) {
+          setUser(userData);
+          fetchPosts(userId);
+          fetchCircles(userId);
+        } else {
+          router.replace('/');
+        }
+      };
       
-      if (!token) {
-        router.replace('/');
-        return;
-      }
-      
-      if (userStr) {
-        const userData = JSON.parse(userStr);
-        setUser(userData);
-        fetchPosts(userData.id);
-        fetchCircles(userData.id);
-      } else {
-        router.replace("/");
-      }
+      loadUser();
     }
   }, [router]);
 
-  // Close user menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.user-menu-container')) {
-        setShowUserMenu(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Hide navbar on scroll down (after threshold), show on scroll up (small delta), with debounce
   useEffect(() => {
@@ -170,7 +153,12 @@ export default function DashboardPage() {
   async function fetchPosts(userId: string) {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/get-posts?user_id=${userId}`);
+      const { getSocket } = await import('@/utils/socketAuth');
+      const socket = getSocket();
+      const socketId = socket?.id;
+      
+      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/get-posts?user_id=${userId}${socketId ? `&socket_id=${socketId}` : ''}`;
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setPosts(data.posts);
@@ -208,9 +196,16 @@ export default function DashboardPage() {
     if (!postContent.trim() || !user) return;
     
     try {
+      // Use Socket.IO token for API call
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/create-post`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           user_id: user.id,
           content: postContent,
@@ -229,6 +224,43 @@ export default function DashboardPage() {
       console.error("Error creating post:", error);
     }
   }
+
+  const handleDeletePost = async (postId: string) => {
+    if (!user) return;
+    const { confirmDialog } = await import('@/utils/confirmDialog');
+    const confirmed = await confirmDialog('Are you sure you want to delete this post?', 'Delete', 'Cancel', 'danger');
+    if (!confirmed) return;
+
+    try {
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const response = await fetch(`${apiUrl}/delete-post/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ user_id: user.id })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setShowPostMenu(null);
+        fetchPosts(user.id);
+      } else {
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to delete post'), 'error');
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to delete post: ' + sanitizeErrorMessage(error), 'error');
+    }
+  };
 
   async function handleLike(postId: string) {
     if (!user) return;
@@ -253,103 +285,16 @@ export default function DashboardPage() {
     }
   }
 
-  function handleLogout() {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("user");
-    router.push("/");
-  }
-
-  function getTimeAgo(dateString: string) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
-    if (seconds < 60) return `${seconds} seconds ago`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
-    return `${Math.floor(seconds / 86400)} days ago`;
+  function handleCommentAdded() {
+    if (user) {
+      fetchPosts(user.id);
+    }
   }
 
   return (
     <div className={styles.dashboardWrapper}>
       {/* Navbar */}
-      <nav className={`${styles.navbar} ${isNavHidden ? styles.navbarHidden : ''}`}>
-        <div className={styles.navContainer}>
-          <Link href="/dashboard" className={styles.navbarBrand}>
-            <img src="/images/logo.png" alt="Chautari Logo" />
-            <span>Chautari</span>
-          </Link>
-
-          <div className={styles.searchContainer}>
-            <div className={styles.searchForm}>
-              <input type="search" placeholder="Search..." />
-              <button><i className="fas fa-search"></i></button>
-            </div>
-          </div>
-
-          <ul className={styles.navbarNav}>
-            <li className={styles.navItem}>
-              <Link href="/dashboard" className={`${styles.navLink} ${styles.active}`}>
-                <i className="fas fa-home"></i>
-                <span className={styles.menuName}>Home</span>
-              </Link>
-            </li>
-            <li className={styles.navItem}>
-              <Link href="/messenger" className={styles.navLink}>
-                <i className="fas fa-comment-dots"></i>
-                <span className={styles.menuName}>Messenger</span>
-              </Link>
-            </li>
-            <li className={styles.navItem}>
-              <Link href="/circles" className={styles.navLink}>
-                <i className="fas fa-users"></i>
-                <span className={styles.menuName}>Communities</span>
-              </Link>
-            </li>
-            <li className={styles.navItem}>
-              <Link href="#" className={styles.navLink}>
-                <i className="fas fa-calendar-alt"></i>
-                <span className={styles.menuName}>Events</span>
-              </Link>
-            </li>
-            <li className={styles.navItem}>
-              <Link href="#" className={styles.navLink}>
-                <i className="fas fa-bell"></i>
-                <span className={styles.menuName}>Notifications</span>
-              </Link>
-            </li>
-            <li className={`${styles.navItem} ${styles.dropdown} user-menu-container`}>
-              <button 
-                className={styles.navLink}
-                onClick={() => setShowUserMenu(!showUserMenu)}
-              >
-                <i className="fas fa-bars"></i>
-                <span className={styles.menuName}>Menu</span>
-              </button>
-              {showUserMenu && (
-                <ul className={styles.dropdownMenu}>
-                  <li>
-                    <Link href="/profile" className={styles.dropdownItem}>
-                      <i className="fas fa-user"></i> Profile
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/circles" className={styles.dropdownItem}>
-                      <i className="fas fa-users"></i> Communities
-                    </Link>
-                  </li>
-                  <li><hr className={styles.dropdownDivider} /></li>
-                  <li>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>
-                      <i className="fas fa-sign-out-alt"></i> Logout
-                    </button>
-                  </li>
-                </ul>
-              )}
-            </li>
-          </ul>
-        </div>
-      </nav>
+      <Navigation isHidden={isNavHidden} />
 
       {/* Scroll to Top Button */}
       {showScrollToTop && (
@@ -453,104 +398,82 @@ export default function DashboardPage() {
           {/* Posts Feed */}
           {loading ? (
             <div className={styles.loadingMessage}>Loading posts...</div>
-          ) : posts.length > 0 ? (
-            posts.map((post) => (
-              <div key={post.id} className={styles.postCard}>
-                {/* Post Header */}
-                <div className={styles.cardHeader}>
-                  <div className={styles.userSection}>
+          ) : posts.filter(post => !hiddenPosts.has(post.id)).length > 0 ? (
+            posts.filter(post => !hiddenPosts.has(post.id)).map((post) => {
+              // Convert dashboard post to PostCard format
+              const postCardData: Post = {
+                ...post,
+                circle: post.circle || null,
+                recent_likers: [],
+                comments: []
+              };
+
+              return (
+                <PostCard
+                  key={post.id}
+                  post={postCardData}
+                  userId={user?.id}
+                  showComments={false}
+                  onLike={handleLike}
+                  customOptionsMenu={
+                    <div className={styles.postOptionsDropdown}>
                       <button 
-                        type="button"
-                        className={styles.profilePicButton}
-                        onClick={() => router.push(`/profile/${post.user.id}`)}
+                        className={styles.postOptions}
+                        onClick={() => setShowPostMenu(showPostMenu === post.id ? null : post.id)}
                       >
-                      <img 
-                        src={post.user.profile_pic || '/images/default_profile.png'} 
-                        alt={post.user.full_name}
-                        className={styles.profilePic}
-                      />
-                    </button>
-                    <div className={styles.userInfo}>
-                      <button 
-                        type="button"
-                        className={styles.usernameButton}
-                        onClick={() => router.push(`/profile/${post.user.id}`)}
-                      >
-                        <span className={styles.username}>{post.user.full_name}</span>
+                        <i className="fas fa-ellipsis-v"></i>
                       </button>
-                      <span className={styles.postDate}>{getTimeAgo(post.created_at)}</span>
-                      {post.circle && (
-                        <span className={styles.postCircle}>
-                          <i className="fas fa-users"></i> {post.circle.name}
-                        </span>
+                      {showPostMenu === post.id && (
+                        <div className={styles.postDropdownMenu}>
+                          <button 
+                            className={styles.dropdownItem}
+                            onClick={() => {
+                              setShowPostMenu(null);
+                              setSelectedPost(post);
+                              setShowViewPostModal(true);
+                            }}
+                          >
+                            <i className="fas fa-eye"></i> View Post
+                          </button>
+                          {post.user.id === user?.id && (
+                            <button 
+                              className={`${styles.dropdownItem} ${styles.textDanger}`}
+                              onClick={() => {
+                                setShowPostMenu(null);
+                                handleDeletePost(post.id);
+                              }}
+                            >
+                              <i className="fas fa-trash"></i> Delete Post
+                            </button>
+                          )}
+                          {post.user.id !== user?.id && (
+                            <button
+                              className={styles.dropdownItem}
+                              onClick={() => {
+                                setShowPostMenu(null);
+                                setSelectedPost(post);
+                                setShowReportModal(true);
+                              }}
+                            >
+                              <i className="fas fa-flag"></i> Report
+                            </button>
+                          )}
+                          <button
+                            className={styles.dropdownItem}
+                            onClick={() => {
+                              setShowPostMenu(null);
+                              setHiddenPosts(prev => new Set(prev).add(post.id));
+                            }}
+                          >
+                            <i className="fas fa-eye-slash"></i> Hide Post
+                          </button>
+                        </div>
                       )}
                     </div>
-                  </div>
-                  <div className={styles.postOptionsDropdown}>
-                    <button 
-                      className={styles.postOptions}
-                      onClick={() => setShowPostMenu(showPostMenu === post.id ? null : post.id)}
-                    >
-                      <i className="fas fa-ellipsis-v"></i>
-                    </button>
-                    {showPostMenu === post.id && (
-                      <div className={styles.postDropdownMenu}>
-                        <button 
-                          className={styles.dropdownItem}
-                          onClick={() => {
-                            setShowPostMenu(null);
-                            router.push(`/post/${post.id}`);
-                          }}
-                        >
-                          <i className="fas fa-eye"></i> View Post
-                        </button>
-                        <button className={styles.dropdownItem}>
-                          <i className="fas fa-flag"></i> Report
-                        </button>
-                        <button className={styles.dropdownItem}>
-                          <i className="fas fa-eye-slash"></i> Hide Post
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Post Content */}
-                <div className={styles.cardCaption}>
-                  <p>{post.content}</p>
-                </div>
-
-                {/* Post Media */}
-                {post.media_files && post.media_files.length > 0 && (
-                  <div className={styles.cardImage}>
-                    <img 
-                      src={post.media_files[0].file} 
-                      alt="Post media" 
-                      className={styles.postMedia}
-                    />
-                  </div>
-                )}
-
-                {/* Post Actions */}
-                <div className={styles.cardActions}>
-                  <button 
-                    onClick={() => handleLike(post.id)} 
-                    className={styles.likeBtn}
-                  >
-                    <i className={post.user_liked ? "fas fa-heart" : "far fa-heart"}
-                       style={{ color: post.user_liked ? '#e3342f' : '#6c757d' }}></i>
-                    <span className={styles.likeCount}>{post.like_count}</span>
-                  </button>
-                  <button 
-                    className={styles.commentBtn}
-                    onClick={() => router.push(`/post/${post.id}`)}
-                  >
-                    <i className="far fa-comment"></i>
-                    <span className={styles.commentCount}>{post.comment_count}</span>
-                  </button>
-                </div>
-              </div>
-            ))
+                  }
+                />
+              );
+            })
           ) : (
             <div className={styles.emptyFeed}>
               <div className={styles.emptyFeedIcon}>
@@ -565,7 +488,24 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Right Sidebar */}
+             {showReportModal && selectedPost && (
+               <ReportPostModal
+                 post={selectedPost}
+                 userId={user?.id || null}
+                 isOpen={showReportModal}
+                 onClose={() => {
+                   setShowReportModal(false);
+                   setSelectedPost(null);
+                 }}
+                 onReportSubmitted={() => {
+                   if (user) {
+                     fetchPosts(user.id);
+                   }
+                 }}
+               />
+             )}
+
+             {/* Right Sidebar */}
         <aside className={styles.sidebarRight}>
           {/* My Circles */}
           <div className={styles.sidebarWidget}>
@@ -632,6 +572,40 @@ export default function DashboardPage() {
           </div>
         </aside>
       </section>
+
+      {showReportModal && selectedPost && (
+        <ReportPostModal
+          post={selectedPost}
+          userId={user?.id || null}
+          isOpen={showReportModal}
+          onClose={() => {
+            setShowReportModal(false);
+            setSelectedPost(null);
+          }}
+          onReportSubmitted={() => {
+            if (user) {
+              fetchPosts(user.id);
+            }
+          }}
+        />
+      )}
+
+      {showViewPostModal && selectedPost && (
+        <ViewPostModal
+          post={selectedPost}
+          userId={user?.id || null}
+          isOpen={showViewPostModal}
+          onClose={() => {
+            setShowViewPostModal(false);
+            setSelectedPost(null);
+          }}
+          onLike={handleLike}
+          onCommentAdded={handleCommentAdded}
+          onPostDeleted={() => {
+            fetchPosts(user?.id || '');
+          }}
+        />
+      )}
     </div>
   );
 }

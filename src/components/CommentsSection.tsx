@@ -85,11 +85,15 @@ export default function CommentsSection({
           onCommentAdded();
         }
       } else {
-        alert('Failed to add comment: ' + (data.message || 'Unknown error'));
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast('Failed to add comment: ' + sanitizeErrorMessage(data.message || 'Unknown error'), 'error');
       }
     } catch (error) {
       console.error('Error adding comment:', error);
-      alert('Failed to add comment. Please try again.');
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to add comment: ' + sanitizeErrorMessage(error), 'error');
     } finally {
       setIsSubmittingComment(false);
     }

@@ -221,12 +221,16 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     // Close dropdown first
     setShowDropdown(false);
 
-    // Navigate to post page if post_id exists (with blurred background like dashboard)
-    if (notification.post_id) {
-      router.push(`/post/${notification.post_id}`);
-    } else if (notification.target_url) {
-      // Fallback to target_url if no post_id
+    // Navigate based on notification type and available URLs
+    if (notification.target_url) {
+      // Use target_url if available (for flagged posts, it goes to manage page)
       router.push(notification.target_url);
+    } else if (notification.post_id) {
+      // Navigate to post page if post_id exists
+      router.push(`/post/${notification.post_id}`);
+    } else if (notification.circle_id) {
+      // Fallback to circle page if circle_id exists
+      router.push(`/circle/${notification.circle_id}`);
     }
   };
 
@@ -274,6 +278,16 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
         return 'fas fa-trash';
       case 'post_reported':
         return 'fas fa-flag';
+      case 'flagged':
+        return 'fas fa-exclamation-triangle';
+      case 'post_flagged_auto':
+        return 'fas fa-flag';
+      case 'warning':
+        return 'fas fa-exclamation-circle';
+      case 'join_request':
+        return 'fas fa-user-plus';
+      case 'new_post':
+        return 'fas fa-file-alt';
       case 'unban':
         return 'fas fa-unlock';
       default:

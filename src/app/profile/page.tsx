@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
+import Navigation from '@/components/Navigation';
 import styles from './profile.module.css';
 
 interface UserProfile {
@@ -23,6 +24,7 @@ interface MediaFile {
 }
 
 interface Post {
+  circle: any;
   id: string;
   content: string;
   created_at: string;
@@ -48,9 +50,9 @@ interface GalleryItem {
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'posts' | 'gallery' | 'about'>('posts');
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -62,6 +64,24 @@ export default function ProfilePage() {
   const [loadingGallery, setLoadingGallery] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<{url: string, type: string} | null>(null);
   const [viewedUserId, setViewedUserId] = useState<string | null>(null);
+  
+  // Check if viewing own profile
+  // If no viewedUserId in URL path, it's own profile (/profile)
+  // If viewedUserId exists (/profile/[id]), compare with currentUserId
+  // IMPORTANT: Only compare viewedUserId with currentUserId, NOT with user.id
+  // because user.id is the profile being viewed (could be someone else!)
+  const isOwnProfile = useMemo(() => {
+    // If no viewedUserId in URL, it's own profile
+    if (!viewedUserId) return true;
+    
+    // If we have both IDs, compare them
+    if (currentUserId && viewedUserId) {
+      return currentUserId.toString() === viewedUserId.toString();
+    }
+    
+    // If we don't have currentUserId yet, assume it's not own profile (safer)
+    return false;
+  }, [viewedUserId, currentUserId]);
   
   // Edit form states
   const [editFullName, setEditFullName] = useState('');
@@ -76,36 +96,48 @@ export default function ProfilePage() {
   const profilePicInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    // Add class to body/html for background styling
+    if (typeof window !== 'undefined') {
+      document.body.classList.add('profile-page');
+      document.documentElement.classList.add('profile-page');
+    }
+    
+    // Get current user ID for comparison
+    const loadCurrentUser = async () => {
+      const { getUserId } = await import('@/utils/socketAuth');
+      const userId = getUserId();
+      setCurrentUserId(userId);
+    };
+    loadCurrentUser();
+    
     fetchUserProfile();
+    
+    // Cleanup: remove class on unmount
+    return () => {
+      if (typeof window !== 'undefined') {
+        document.body.classList.remove('profile-page');
+        document.documentElement.classList.remove('profile-page');
+      }
+    };
   }, []);
 
   useEffect(() => {
+    // Fetch posts based on profile type
     if (user?.id && activeTab === 'posts') {
-      fetchUserPosts();
-    } else if (user?.id && activeTab === 'gallery') {
+      if (isOwnProfile) {
+        fetchUserPosts();
+      } else if (currentUserId && viewedUserId) {
+        fetchSharedCirclePosts();
+      }
+    } else if (isOwnProfile && user?.id && activeTab === 'gallery') {
       fetchUserGallery();
     }
-  }, [activeTab, user?.id]);
+  }, [activeTab, user?.id, isOwnProfile, currentUserId, viewedUserId]);
 
-  // Close user menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as HTMLElement;
-      if (showUserMenu && !target.closest('[class*="userMenu"]')) {
-        setShowUserMenu(false);
-      }
-    }
-
-    if (showUserMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showUserMenu]);
 
   async function fetchUserProfile() {
     try {
       if (typeof window !== "undefined") {
-        const token = localStorage.getItem("auth_token");
         const path = window.location.pathname;
         const matches = path.match(/\/profile\/(.+)$/);
         const idFromPath = matches ? matches[1] : null;
@@ -113,10 +145,24 @@ export default function ProfilePage() {
 
         if (idFromPath) {
           // Public viewer mode: fetch by user id
+          // First, ensure we have currentUserId for comparison
+          const { getUserId } = await import('@/utils/socketAuth');
+          const currentId = getUserId();
+          if (currentId) {
+            setCurrentUserId(currentId);
+          }
+          
+          // Double-check: if viewing own profile, redirect to /profile (no ID in URL)
+          if (currentId && idFromPath === currentId) {
+            router.replace('/profile');
+            return;
+          }
+          
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/get-user-profile/by-id/${idFromPath}`);
           const data = await res.json();
           if (data.success && data.user) {
             setUser(data.user);
+            setViewedUserId(idFromPath);
           } else {
             router.replace('/dashboard');
           }
@@ -125,25 +171,40 @@ export default function ProfilePage() {
         }
 
         // Self profile mode (requires token)
+        // Use Socket.IO first, then fallback
+        const { ensureAuth, getAuthToken } = await import('@/utils/socketAuth');
+        const { token, userData } = await ensureAuth();
+        
         if (!token) {
           router.replace('/');
           return;
         }
 
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
-          const userData = JSON.parse(userStr);
+        // Try to get user from Socket.IO first
+        if (userData) {
           setUser(userData);
         }
 
+        // Fetch fresh user data from backend using Socket.IO token
+        const authToken = getAuthToken();
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/get-user-profile`, {
           method: "GET",
-          headers: { "Authorization": `Bearer ${token}` },
+          headers: { "Authorization": `Bearer ${authToken}` },
         });
         const data = await res.json();
         if (data.success && data.user) {
           setUser(data.user);
-          localStorage.setItem("user", JSON.stringify(data.user));
+          // Always set currentUserId when fetching own profile
+          if (data.user.id) {
+            setCurrentUserId(data.user.id);
+          }
+          // Update tab-specific storage
+          const tabId = sessionStorage.getItem('socket_tab_id');
+          if (tabId) {
+            sessionStorage.setItem(`tab_user_data_${tabId}`, JSON.stringify(data.user));
+            const { registerTabAuth } = await import('@/utils/socketAuth');
+            registerTabAuth(data.user.id, authToken || '', data.user).catch(() => {});
+          }
         }
       }
     } catch (error) {
@@ -154,7 +215,10 @@ export default function ProfilePage() {
   }
 
   function openEditModal() {
-    if (!user) return;
+    if (!user || !isOwnProfile) {
+      console.warn('Cannot edit profile: Not own profile');
+      return;
+    }
     
     // Initialize edit form with current values
     setEditFullName(user.fullName || '');
@@ -177,8 +241,10 @@ export default function ProfilePage() {
     setSuccess(null);
   }
 
-  function handleRemovePhoto() {
-    if (confirm('Are you sure you want to remove your profile picture?')) {
+  async function handleRemovePhoto() {
+    const { confirmDialog } = await import('@/utils/confirmDialog');
+    const confirmed = await confirmDialog('Are you sure you want to remove your profile picture?', 'Remove', 'Cancel');
+    if (confirmed) {
       setPreview('/images/default_profile.png');
       setNewProfilePic(null);
       setRemoveProfilePic(true);
@@ -187,16 +253,23 @@ export default function ProfilePage() {
   }
 
   const handleProfilePicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isOwnProfile) {
+      console.warn('Cannot change profile picture: Not own profile');
+      return;
+    }
+    
     const file = e.target.files?.[0];
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Please select an image file', 'error');
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Image size should be less than 5MB', 'error');
       return;
     }
     
@@ -225,13 +298,18 @@ export default function ProfilePage() {
         };
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));
-        alert('Profile picture updated successfully!');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast('Profile picture updated successfully!', 'success');
       } else {
-        alert('Failed to upload profile picture');
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to upload profile picture'), 'error');
       }
     } catch (error) {
       console.error('Profile picture upload error:', error);
-      alert('Failed to upload profile picture');
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to upload profile picture: ' + sanitizeErrorMessage(error), 'error');
     } finally {
       setUploading(false);
     }
@@ -259,6 +337,11 @@ export default function ProfilePage() {
   };
 
   async function handleSaveProfile() {
+    if (!isOwnProfile) {
+      console.warn('Cannot save profile: Not own profile');
+      return;
+    }
+    
     setError(null);
     setSuccess(null);
     
@@ -364,6 +447,27 @@ export default function ProfilePage() {
     }
   }
 
+  async function fetchSharedCirclePosts() {
+    if (!user?.id || !currentUserId) return;
+    
+    try {
+      setLoadingPosts(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/posts/shared-circle-posts?viewer_id=${currentUserId}&profile_user_id=${user.id}`
+      );
+      const data = await response.json();
+      
+      if (data.success) {
+        setPosts(data.posts || []);
+      }
+    } catch (error) {
+      console.error("Error fetching shared circle posts:", error);
+      setPosts([]);
+    } finally {
+      setLoadingPosts(false);
+    }
+  }
+
   async function fetchUserGallery() {
     if (!user?.id) return;
     
@@ -394,13 +498,6 @@ export default function ProfilePage() {
     return `${Math.floor(seconds / 604800)}w`;
   }
 
-  function handleLogout() {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("user");
-      localStorage.removeItem("auth_token");
-    }
-    router.replace("/");
-  }
 
   if (loading) {
     return (
@@ -423,92 +520,49 @@ export default function ProfilePage() {
 
   return (
     <div className={styles.profileWrapper}>
-      {/* Top Navigation */}
-      <nav className={styles.topNav}>
-        <div className={styles.navContainer}>
-          <Link href="/dashboard" className={styles.navBrand}>
-            <img src="/images/logo.png" alt="Chautari" className={styles.logoImg} />
-          </Link>
-          
-          <div className={styles.navCenter}>
-            <div className={styles.searchBar}>
-              <i className="fas fa-search"></i>
-              <input type="text" placeholder="Search Chautari..." />
-            </div>
-          </div>
-
-          <div className={styles.navRight}>
-            <Link href="/dashboard" className={styles.navIconBtn} title="Home">
-              <i className="fas fa-home"></i>
-            </Link>
-            <button className={styles.navIconBtn} title="Notifications">
-              <i className="fas fa-bell"></i>
-              <span className={styles.notificationBadge}>0</span>
-            </button>
-            <Link href="/messenger" className={styles.navIconBtn} title="Messages">
-              <i className="fas fa-envelope"></i>
-            </Link>
-            
-            <div className={styles.userMenu}>
-              <button 
-                className={styles.userMenuBtn}
-                onClick={() => setShowUserMenu(!showUserMenu)}
-              >
-                <img
-                  src={user.profilePic || "/images/default_profile.png"}
-                  alt="Profile"
-                  className={styles.userAvatar}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/images/default_profile.png";
-                  }}
-                />
-                <span className={styles.userName}>{user.fullName || "User"}</span>
-                <i className="fas fa-chevron-down"></i>
-              </button>
-              {showUserMenu && (
-                <div className={styles.dropdownMenu}>
-                  <Link href="/profile" className={styles.dropdownItem}>
-                    <i className="fas fa-user"></i> My Profile
-                  </Link>
-                  <Link href="/dashboard" className={styles.dropdownItem}>
-                    <i className="fas fa-home"></i> Dashboard
-                  </Link>
-                  <hr className={styles.dropdownDivider} />
-                  <button onClick={handleLogout} className={`${styles.dropdownItem} ${styles.logoutBtn}`}>
-                    <i className="fas fa-sign-out-alt"></i> Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      {/* Navigation Component */}
+      <Navigation />
 
       <div className={styles.container}>
         {/* Profile Header */}
         <div className={styles.profileHeader}>
           <div className={styles.profilePicWrapper}>
-            <label htmlFor="profilePicInput" className={styles.profilePicLabel}>
-              <img
-                src={user.profilePic || "/images/default_profile.png"}
-                alt="Profile Picture"
-                className={styles.profileAvatar}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/images/default_profile.png";
-                }}
-              />
-              {uploading && <div className={styles.uploadingOverlay}>Uploading...</div>}
-            </label>
-            <input
-              ref={profilePicInputRef}
-              type="file"
-              id="profilePicInput"
-              accept="image/*"
-              onChange={handleProfilePicChange}
-              style={{ display: 'none' }}
-            />
+            {isOwnProfile ? (
+              <>
+                <label htmlFor="profilePicInput" className={styles.profilePicLabel}>
+                  <img
+                    src={user.profilePic || "/images/default_profile.png"}
+                    alt="Profile Picture"
+                    className={styles.profileAvatar}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/images/default_profile.png";
+                    }}
+                  />
+                  {uploading && <div className={styles.uploadingOverlay}>Uploading...</div>}
+                </label>
+                <input
+                  ref={profilePicInputRef}
+                  type="file"
+                  id="profilePicInput"
+                  accept="image/*"
+                  onChange={handleProfilePicChange}
+                  style={{ display: 'none' }}
+                />
+              </>
+            ) : (
+              <div className={styles.profilePicLabel}>
+                <img
+                  src={user.profilePic || "/images/default_profile.png"}
+                  alt="Profile Picture"
+                  className={styles.profileAvatar}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/images/default_profile.png";
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <h2 className={styles.profileName}>{user.fullName}</h2>
@@ -518,12 +572,13 @@ export default function ProfilePage() {
           </div>
 
           <div className={styles.profileActions}>
-            {viewedUserId ? (
-              <>
-                <Link href={`/messenger?to=${user.id || viewedUserId}`} className={styles.messageBtn}>
-                  <i className="fas fa-paper-plane"></i> Message
-                </Link>
-              </>
+            {!isOwnProfile ? (
+              <button 
+                onClick={() => router.push(`/chat?user=${user.id || viewedUserId}`)}
+                className={styles.messageBtn}
+              >
+                <i className="fas fa-paper-plane"></i> Message
+              </button>
             ) : (
               <button onClick={openEditModal} className={styles.editBtn}>
                 <i className="fas fa-edit"></i> Edit Profile
@@ -532,38 +587,45 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Tabs Navigation */}
-        <ul className={styles.navTabs}>
-          <li className={styles.navItem}>
-            <button
-              className={`${styles.navLink} ${activeTab === 'posts' ? styles.active : ''}`}
-              onClick={() => setActiveTab('posts')}
-            >
-              <i className="fas fa-stream"></i> Posts
-            </button>
-          </li>
-          <li className={styles.navItem}>
-            <button
-              className={`${styles.navLink} ${activeTab === 'gallery' ? styles.active : ''}`}
-              onClick={() => setActiveTab('gallery')}
-            >
-              <i className="fas fa-images"></i> Gallery
-            </button>
-          </li>
-          <li className={styles.navItem}>
-            <button
-              className={`${styles.navLink} ${activeTab === 'about' ? styles.active : ''}`}
-              onClick={() => setActiveTab('about')}
-            >
-              <i className="fas fa-info-circle"></i> About
-            </button>
-          </li>
-        </ul>
+        {/* Tabs Navigation - Only show if viewing own profile */}
+        {isOwnProfile ? (
+          <ul className={styles.navTabs}>
+            <li className={styles.navItem}>
+              <button
+                className={`${styles.navLink} ${activeTab === 'posts' ? styles.active : ''}`}
+                onClick={() => setActiveTab('posts')}
+              >
+                <i className="fas fa-stream"></i> Posts
+              </button>
+            </li>
+            <li className={styles.navItem}>
+              <button
+                className={`${styles.navLink} ${activeTab === 'gallery' ? styles.active : ''}`}
+                onClick={() => setActiveTab('gallery')}
+              >
+                <i className="fas fa-images"></i> Gallery
+              </button>
+            </li>
+            <li className={styles.navItem}>
+              <button
+                className={`${styles.navLink} ${activeTab === 'about' ? styles.active : ''}`}
+                onClick={() => setActiveTab('about')}
+              >
+                <i className="fas fa-info-circle"></i> About
+              </button>
+            </li>
+          </ul>
+        ) : (
+          <div className={styles.sharedPostsHeader}>
+            <h3><i className="fas fa-users"></i> Posts in Shared Circles</h3>
+          </div>
+        )}
 
-        {/* Tab Content */}
-        <div className={styles.tabContent}>
-          {/* Posts Tab */}
-          {activeTab === 'posts' && (
+        {/* Tab Content - Only show if viewing own profile */}
+        {isOwnProfile ? (
+          <div className={styles.tabContent}>
+            {/* Posts Tab */}
+            {activeTab === 'posts' && (
             <div className={styles.tabPane}>
               {loadingPosts ? (
                 <div className={styles.loadingState}>
@@ -602,9 +664,10 @@ export default function ProfilePage() {
                         <div className={styles.postMedia}>
                           {post.media_files.length === 1 ? (
                             post.media_files[0].type === 'video' ? (
-                              <video controls className={styles.singleMedia}>
-                                <source src={post.media_files[0].file} type="video/mp4" />
-                              </video>
+                              <div className={styles.singleMedia} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', backgroundColor: '#f0f0f0', borderRadius: '8px', minHeight: '200px' }}>
+                                <i className="fas fa-video" style={{ fontSize: '48px', color: '#999', marginBottom: '10px' }}></i>
+                                <p style={{ color: '#999' }}>Video playback not supported</p>
+                              </div>
                             ) : (
                               <img src={post.media_files[0].file} alt="Post media" className={styles.singleMedia} />
                             )
@@ -613,9 +676,10 @@ export default function ProfilePage() {
                               {post.media_files.map((media, index) => (
                                 <div key={index} className={styles.mediaItem}>
                                   {media.type === 'video' ? (
-                                    <video controls className={styles.mediaFile}>
-                                      <source src={media.file} type="video/mp4" />
-                                    </video>
+                                    <div className={styles.mediaFile} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', backgroundColor: '#f0f0f0', borderRadius: '8px', minHeight: '150px' }}>
+                                      <i className="fas fa-video" style={{ fontSize: '32px', color: '#999', marginBottom: '8px' }}></i>
+                                      <span style={{ color: '#999', fontSize: '12px' }}>Video not supported</span>
+                                    </div>
                                   ) : (
                                     <img src={media.file} alt={`Post media ${index + 1}`} className={styles.mediaFile} />
                                   )}
@@ -665,9 +729,10 @@ export default function ProfilePage() {
                   {gallery.map(item => (
                     <div key={item.id} className={styles.galleryItem} onClick={() => setSelectedMedia({url: item.file, type: item.type})}>
                       {item.type === 'video' ? (
-                        <video className={styles.galleryImg} muted>
-                          <source src={item.file} type="video/mp4" />
-                        </video>
+                        <div className={styles.galleryImg} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: '8px', minHeight: '200px' }}>
+                          <i className="fas fa-video" style={{ fontSize: '32px', color: '#999', marginBottom: '8px' }}></i>
+                          <span style={{ color: '#999', fontSize: '12px' }}>Video not supported</span>
+                        </div>
                       ) : (
                         <img src={item.file} className={styles.galleryImg} alt="Gallery item" />
                       )}
@@ -734,11 +799,108 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
-        </div>
+          </div>
+        ) : (
+          <div className={styles.tabContent}>
+            {/* Show shared circle posts when viewing another user */}
+            {activeTab === 'posts' && (
+              <div className={styles.tabPane}>
+                {loadingPosts ? (
+                  <div className={styles.loadingState}>
+                    <div className={styles.loadingSpinner}></div>
+                    <p>Loading posts...</p>
+                  </div>
+                ) : posts.length > 0 ? (
+                  <div className={styles.postsContainer}>
+                    {posts.map(post => (
+                      <div key={post.id} className={styles.postCard}>
+                        <div className={styles.postHeader}>
+                          <div className={styles.postUser}>
+                            <img 
+                              src={post.user.profilePic || '/images/default_profile.png'} 
+                              alt={post.user.fullName}
+                              className={styles.postUserAvatar}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src = '/images/default_profile.png';
+                              }}
+                            />
+                            <div className={styles.postUserInfo}>
+                              <span className={styles.postUserName}>{post.user.fullName}</span>
+                              <span className={styles.postTime}>{getTimeAgo(post.created_at)} ago</span>
+                              {post.circle && (
+                                <span className={styles.postCircle}>
+                                  <i className="fas fa-users"></i> {post.circle.name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {post.content && (
+                          <div className={styles.postContent}>
+                            <p>{post.content}</p>
+                          </div>
+                        )}
+
+                        {post.media_files && post.media_files.length > 0 && (
+                          <div className={styles.postMedia}>
+                            {post.media_files.length === 1 ? (
+                              post.media_files[0].type === 'video' ? (
+                                <div className={styles.singleMedia} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', backgroundColor: '#f0f0f0', borderRadius: '8px', minHeight: '200px' }}>
+                                  <i className="fas fa-video" style={{ fontSize: '48px', color: '#999', marginBottom: '10px' }}></i>
+                                  <p style={{ color: '#999' }}>Video playback not supported</p>
+                                </div>
+                              ) : (
+                                <img src={post.media_files[0].file} alt="Post media" className={styles.singleMedia} />
+                              )
+                            ) : (
+                              <div className={styles.mediaGrid}>
+                                {post.media_files.map((media: MediaFile, index: number) => (
+                                  <div key={index} className={styles.mediaItem}>
+                                    {media.type === 'video' ? (
+                                      <div className={styles.mediaFile} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', backgroundColor: '#f0f0f0', borderRadius: '8px', minHeight: '150px' }}>
+                                        <i className="fas fa-video" style={{ fontSize: '32px', color: '#999', marginBottom: '8px' }}></i>
+                                        <span style={{ color: '#999', fontSize: '12px' }}>Video not supported</span>
+                                      </div>
+                                    ) : (
+                                      <img src={media.file} alt={`Post media ${index + 1}`} className={styles.mediaFile} />
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className={styles.postActions}>
+                          <button className={styles.actionBtn}>
+                            <i className="far fa-heart"></i>
+                            <span>{post.like_count || 0}</span>
+                          </button>
+                          <button className={styles.actionBtn}>
+                            <i className="far fa-comment"></i>
+                            <span>{post.comment_count || 0}</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.emptyState}>
+                    <i className="fas fa-stream"></i>
+                    <h3>No shared posts</h3>
+                    <p>This user hasn't posted in any circles you both belong to.</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Edit Profile Modal */}
-      {showEditModal && (
+      {/* Edit Profile Modal - Only show for own profile */}
+      {showEditModal && isOwnProfile && (
         <div className={styles.modalOverlay} onClick={closeEditModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>

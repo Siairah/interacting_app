@@ -43,20 +43,36 @@ export default function ConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className={styles.overlay} onClick={onCancel}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div 
+      className={styles.overlay} 
+      onClick={onCancel}
+      onMouseDown={(e) => {
+        // Prevent clicks from propagating to underlying modals
+        e.stopPropagation();
+      }}
+    >
+      <div 
+        className={styles.modal} 
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div className={styles.content}>
+          <div className={styles.iconWrapper}>
+            <i className="fas fa-exclamation-triangle"></i>
+          </div>
           <p className={styles.message}>{message}</p>
           <div className={styles.buttons}>
             <button
               className={`${styles.button} ${styles.cancelButton}`}
               onClick={onCancel}
+              type="button"
             >
               {cancelText}
             </button>
             <button
               className={`${styles.button} ${styles.confirmButton} ${confirmButtonClass}`}
               onClick={onConfirm}
+              type="button"
             >
               {confirmText}
             </button>

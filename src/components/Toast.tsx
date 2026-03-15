@@ -29,7 +29,7 @@ export default function ToastComponent({ toast, onClose }: ToastProps) {
       case 'success':
         return 'fas fa-check-circle';
       case 'error':
-        return 'fas fa-exclamation-circle';
+        return 'fas fa-times-circle';
       case 'warning':
         return 'fas fa-exclamation-triangle';
       case 'info':
@@ -40,20 +40,37 @@ export default function ToastComponent({ toast, onClose }: ToastProps) {
   };
 
   return (
-    <div className={`${styles.toast} ${styles[toast.type]}`}>
+    <div 
+      className={`${styles.toast} ${styles[toast.type]}`}
+      onClick={(e) => {
+        // Don't close if clicking the close button or icon
+        const target = e.target as HTMLElement;
+        if (target.closest(`.${styles.toastClose}`) || target.closest(`.${styles.toastIcon}`)) {
+          return;
+        }
+        onClose(toast.id);
+      }}
+    >
       <div className={styles.toastContent}>
-        <i className={getIcon()}></i>
+        <div className={styles.toastIcon}>
+          <i className={getIcon()}></i>
+        </div>
         <span className={styles.toastMessage}>{toast.message}</span>
         <button
           className={styles.toastClose}
-          onClick={() => onClose(toast.id)}
-          aria-label="Close"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose(toast.id);
+          }}
+          aria-label="Close notification"
+          type="button"
         >
           <i className="fas fa-times"></i>
         </button>
       </div>
-      <div className={styles.toastProgress}></div>
+      <div className={styles.toastProgress}>
+        <div className={styles.toastProgressBar}></div>
+      </div>
     </div>
   );
 }
-

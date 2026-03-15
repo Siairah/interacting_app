@@ -1,0 +1,154 @@
+.messageInputContainer {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #fff;
+  border-top: 1px solid #e9ecef;
+}
+
+.inputActionBtn {
+  background: none;
+  border: none;
+  color: #8d99ae;
+  font-size: 1.2rem;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.inputActionBtn:hover {
+  color: #6a14eb;
+}
+
+.inputWrapper {
+  flex: 1;
+  position: relative;
+}
+
+.messageInput {
+  width: 100%;
+  padding: 12px 45px 12px 15px;
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  resize: none;
+  max-height: 120px;
+}
+
+.messageInput:focus {
+  outline: none;
+  border-color: #6a14eb;
+  box-shadow: 0 0 0 2px rgba(106, 20, 235, 0.1);
+}
+
+.emojiBtn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #8d99ae;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.emojiBtn:hover {
+  color: #6a14eb;
+}
+
+.selectedFile {
+  font-size: 0.85rem;
+  color: #6a14eb;
+  margin-right: 10px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sendBtn {
+  background-color: #6a14eb;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 10px;
+}
+
+.sendBtn:hover {
+  background-color: #3f37c9;
+  transform: scale(1.05);
+}
+
+.sendBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+.mediaMenuWrapper {
+  position: relative;
+}
+
+.mediaMenu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  min-width: 150px;
+  z-index: 1000;
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #333;
+}
+
+.menuItem:hover {
+  background-color: #f8f9fa;
+}
+
+.menuItem i {
+  margin-right: 12px;
+  width: 20px;
+  color: #6a14eb;
+}
+
+.menuItem span {
+  font-size: 0.95rem;
+}
+

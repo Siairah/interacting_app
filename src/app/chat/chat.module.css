@@ -1,0 +1,24 @@
+.messengerApp {
+  display: flex;
+  height: calc(100vh - 60px);
+  max-width: 100%;
+  margin: 0 auto;
+  background-color: #fff;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  margin-top: 60px;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.loader {
+  font-size: 1.2rem;
+  color: #6a14eb;
+}
+

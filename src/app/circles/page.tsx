@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useRef, useState, useEffect } from 'react';
+import Navigation from '@/components/Navigation';
 import styles from './circles.module.css';
 
 interface UserProfile {
@@ -27,7 +28,6 @@ interface Circle {
 export default function CirclesPage() {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [allCircles, setAllCircles] = useState<Circle[]>([]); // All circles from backend
   const [filteredCircles, setFilteredCircles] = useState<Circle[]>([]); // After search/sort
@@ -51,57 +51,48 @@ export default function CirclesPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const userStr = localStorage.getItem("user");
-      const token = localStorage.getItem("auth_token");
-      
-      if (!token) {
-        router.replace('/');
-        return;
-      }
-      
-      if (userStr) {
-        const userData = JSON.parse(userStr);
-        console.log("👤 User data loaded:", userData);
-        console.log("🖼️ Profile pic URL:", userData.profilePic);
-        console.log("📧 User email:", userData.email);
-        console.log("👤 Full name:", userData.fullName);
+      const loadUser = async () => {
+        // Use Socket.IO first, then fallback
+        const { ensureAuth } = await import('@/utils/socketAuth');
+        const { token, userId, userData } = await ensureAuth();
         
-        // Ensure we have the correct data structure
-        const userWithProfile = {
-          ...userData,
-          profilePic: userData.profilePic || userData.profile_pic || "/images/default_profile.png",
-          fullName: userData.fullName || userData.full_name || "User"
-        };
+        if (!token || !userId) {
+          router.replace('/');
+          return;
+        }
         
-        console.log("✅ Final user object:", userWithProfile);
-        setUser(userWithProfile);
-        fetchAllCircles(userData.id);
-      }
+        // Use user data (from Socket.IO or fallback)
+        if (userData) {
+          const userWithProfile = {
+            ...userData,
+            profilePic: userData.profilePic || userData.profile_pic || "/images/default_profile.png",
+            fullName: userData.fullName || userData.full_name || "User"
+          };
+          setUser(userWithProfile);
+          fetchAllCircles(userId);
+        } else {
+          router.replace('/');
+        }
+      };
+      
+      loadUser();
     }
   }, [router]);
 
-  // Close user menu when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as HTMLElement;
-      if (showUserMenu && !target.closest('[class*="userMenu"]')) {
-        setShowUserMenu(false);
-      }
-    }
-
-    if (showUserMenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showUserMenu]);
 
   async function fetchAllCircles(userId: string) {
     try {
       setLoading(true);
       console.log("🔍 Fetching circles for user:", userId);
       
+      // Use Socket.IO token for API call
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
       // Fetch ALL circles with membership status (updated API)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/circles/list?user_id=${userId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/circles/list?user_id=${userId}`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       const data = await response.json();
       
       console.log("📦 Circles API response:", data);
@@ -114,17 +105,19 @@ export default function CirclesPage() {
         setFilteredCircles(circles);
       } else {
         console.error("❌ Failed to fetch circles:", data.message);
-        setError(data.message || "Failed to load circles");
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        setError(sanitizeErrorMessage(data.message || "Failed to load circles"));
       }
     } catch (error) {
       console.error("💥 Error fetching circles:", error);
-      setError("Failed to load circles");
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      setError("Failed to load circles: " + sanitizeErrorMessage(error));
     } finally {
       setLoading(false);
     }
   }
 
-  // Filter and sort circles (Django logic)
+  // Filter and sort circles 
   useEffect(() => {
     let result = [...allCircles];
     
@@ -208,8 +201,13 @@ export default function CirclesPage() {
         formData.append('cover_image', circleCover);
       }
 
+      // Use Socket.IO token for API call
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/circles/create`, {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         body: formData
       });
 
@@ -228,7 +226,8 @@ export default function CirclesPage() {
       
     } catch (err: any) {
       console.error('Create circle error:', err);
-      setError(err.message || 'Failed to create circle');
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      setError(sanitizeErrorMessage(err.message || 'Failed to create circle'));
     } finally {
       setCreating(false);
     }
@@ -238,9 +237,16 @@ export default function CirclesPage() {
     if (!user?.id) return;
     
     try {
+      // Use Socket.IO token for API call
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/circles/join`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           user_id: user.id,
           circle_id: circleId
@@ -250,24 +256,22 @@ export default function CirclesPage() {
       const data = await res.json();
       
       if (data.success) {
-        alert(data.message);
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast('Circle created successfully', 'success');
         fetchAllCircles(user.id);
       } else {
-        alert(data.message || 'Failed to join circle');
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to join circle'), 'error');
       }
     } catch (error) {
       console.error('Join circle error:', error);
-      alert('Failed to join circle');
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to join circle: ' + sanitizeErrorMessage(error), 'error');
     }
   }
 
-  function handleLogout() {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("user");
-      localStorage.removeItem("auth_token");
-    }
-    router.replace("/");
-  }
 
   if (loading) {
     return (
@@ -280,68 +284,8 @@ export default function CirclesPage() {
 
   return (
     <div className={styles.circlesWrapper}>
-      {/* Top Navigation */}
-      <nav className={styles.topNav}>
-        <div className={styles.navContainer}>
-          <Link href="/dashboard" className={styles.navBrand}>
-            <img src="/images/logo.png" alt="Chautari" className={styles.logoImg} />
-            <span>Chautari</span>
-          </Link>
-          
-          <div className={styles.navCenter}>
-            <div className={styles.searchBar}>
-              <i className="fas fa-search"></i>
-              <input type="text" placeholder="Search circles..." />
-            </div>
-          </div>
-
-          <div className={styles.navRight}>
-            <Link href="/dashboard" className={styles.navIconBtn} title="Home">
-              <i className="fas fa-home"></i>
-            </Link>
-            
-            <div className={styles.userMenu}>
-              <button 
-                className={styles.userMenuBtn}
-                onClick={() => setShowUserMenu(!showUserMenu)}
-              >
-                {user?.profilePic && user.profilePic !== "/images/default_profile.png" ? (
-                  <img
-                    src={user.profilePic}
-                    alt="Profile"
-                    className={styles.userAvatar}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      console.log("❌ Failed to load profile pic:", user?.profilePic);
-                      target.src = "/images/default_profile.png";
-                    }}
-                  />
-                ) : (
-                  <div className={styles.userAvatarPlaceholder}>
-                    {user?.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
-                  </div>
-                )}
-                <span className={styles.userName}>{user?.fullName || "User"}</span>
-                <i className="fas fa-chevron-down"></i>
-              </button>
-              {showUserMenu && (
-                <div className={styles.dropdownMenu}>
-                  <Link href="/profile" className={styles.dropdownItem}>
-                    <i className="fas fa-user"></i> My Profile
-                  </Link>
-                  <Link href="/dashboard" className={styles.dropdownItem}>
-                    <i className="fas fa-home"></i> Dashboard
-                  </Link>
-                  <hr className={styles.dropdownDivider} />
-                  <button onClick={handleLogout} className={`${styles.dropdownItem} ${styles.logoutBtn}`}>
-                    <i className="fas fa-sign-out-alt"></i> Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      {/* Navigation */}
+      <Navigation />
 
       <div className={styles.container}>
         {/* Breadcrumb */}

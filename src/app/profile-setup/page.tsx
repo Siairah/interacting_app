@@ -223,9 +223,17 @@ export default function ProfileSetup() {
         console.log("Auto-login response:", loginData);
 
         if (loginData.success) {
-          // Save JWT token + user info with profile data
-          localStorage.setItem("auth_token", loginData.token);
-          localStorage.setItem("user", JSON.stringify(loginData.user));
+          // Register tab authentication with Socket.IO (tab-specific)
+          const { initSocketAuth, registerTabAuth } = await import('@/utils/socketAuth');
+          const socket = initSocketAuth();
+          
+          // Register tab with Socket.IO (don't await - background process)
+          registerTabAuth(loginData.user.id, loginData.token, loginData.user).catch(err => {
+            console.warn('Tab registration warning:', err);
+            // Continue anyway - sessionStorage is enough
+          });
+          
+          console.log('✅ Profile setup complete, redirecting...');
           
           // Clear pending user data
           localStorage.removeItem('pendingUserData');

@@ -1,10 +1,25 @@
 /* Circles Page - Modern Design (Dashboard Style) */
 .circlesWrapper {
-  min-height: 100vh;
-  height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf6 100%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  overflow: hidden;
+  color: #212529;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Desktop: fixed height with overflow hidden - Match Dashboard */
+@media (min-width: 769px) {
+  .circlesWrapper {
+    height: 100vh;
+    overflow: hidden;
+  }
+}
+
+/* Mobile: allow scrolling - Match Dashboard */
+@media (max-width: 768px) {
+  .circlesWrapper {
+    overflow-y: auto;
+  }
 }
 
 /* Top Navigation - Modern Design (Match Login) */
@@ -13,7 +28,7 @@
   top: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
   z-index: 1000;
   height: 70px;
@@ -269,12 +284,26 @@
 .container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0;
-  height: calc(100vh - 70px);
-  margin-top: 70px;
-  overflow-y: auto;
-  overflow-x: hidden;
   padding: 1.5rem 1.5rem 2rem 1.5rem;
+  overflow-x: hidden;
+}
+
+/* Desktop: fixed height with scrolling */
+@media (min-width: 769px) {
+  .container {
+    height: calc(100vh - 70px);
+    margin-top: 70px;
+    overflow-y: auto;
+  }
+}
+
+/* Mobile: full height with padding for bottom nav - Match Dashboard */
+@media (max-width: 768px) {
+  .container {
+    margin-top: 0;
+    padding: 10px 10px 80px; /* space for bottom nav - Match Dashboard */
+    min-height: auto;
+  }
 }
 
 /* Custom scrollbar for container */
@@ -288,7 +317,7 @@
 }
 
 .container::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 10px;
   transition: all 0.3s ease;
 }
@@ -311,7 +340,7 @@
 .pageTitle {
   font-size: 32px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -424,7 +453,7 @@
 .sectionTitle {
   font-size: 22px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -437,7 +466,7 @@
 }
 
 .sectionTitle i {
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -452,14 +481,16 @@
 }
 
 .circleCard {
-  background: white;
+  background-color: #fff;
+  border: none;
   border-radius: 20px;
-  overflow: hidden;
   box-shadow: 0 8px 30px rgba(102, 126, 234, 0.08);
+  padding: 0;
+  margin-bottom: 0;
+  position: relative;
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   animation: fadeInUp 0.5s ease-out;
-  border: 2px solid transparent;
-  position: relative;
+  overflow: hidden;
 }
 
 .circleCard::before {
@@ -469,7 +500,7 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -623,7 +654,7 @@
 }
 
 .viewCircleBtn:hover {
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-color: transparent;
   transform: translateY(-2px);
@@ -631,7 +662,7 @@
 }
 
 .joinCircleBtn {
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
@@ -646,47 +677,34 @@
   transform: translateY(0);
 }
 
-/* Empty State - User Friendly & Inviting */
+/* Empty State - Match Dashboard Style */
 .emptyState {
   text-align: center;
-  padding: 4rem 2rem;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.08);
+  padding: 40px 20px;
+  border-radius: 12px;
+  background-color: #f8f9fa; /* Match dashboard emptyFeed */
+  margin: 20px auto;
 }
 
 .emptyState i {
-  font-size: 80px;
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 24px;
+  font-size: 60px;
+  color: #6c757d;
+  margin-bottom: 20px;
   display: inline-block;
-  animation: bounce 2s ease-in-out infinite;
-}
-
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
 }
 
 .emptyState h3 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1c1e21;
-  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #343a40;
+  margin: 0 0 15px 0;
 }
 
 .emptyState p {
-  font-size: 16px;
+  font-size: 14px;
   color: #6c757d;
   line-height: 1.6;
-  margin: 0 0 24px 0;
+  margin: 0 0 20px 0;
   max-width: 500px;
   margin-left: auto;
   margin-right: auto;
@@ -968,6 +986,7 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf6 100%);
   animation: fadeIn 0.5s ease-out;
+  padding: 20px;
 }
 
 @keyframes fadeIn {
@@ -1001,69 +1020,6 @@
   color: #65676b;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .container {
-    padding: 1rem;
-    height: calc(100vh - 70px);
-  }
-
-  .pageHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .createCircleBtn {
-    width: 100%;
-  }
-
-  .filterBar {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .searchInput {
-    min-width: 100%;
-  }
-
-  .sortSelect {
-    width: 100%;
-  }
-
-  .circlesGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .navCenter {
-    display: none;
-  }
-
-  .userName {
-    display: none;
-  }
-  
-  .modalContent {
-    max-height: 95vh;
-    margin: 10px;
-  }
-  
-  .modalHeader,
-  .modalBody,
-  .modalFooter {
-    padding: 16px;
-  }
-  
-  .modalFooter {
-    flex-direction: column;
-  }
-  
-  .saveBtn,
-  .cancelBtn {
-    width: 100%;
-    justify-content: center;
-  }
-}
 
 /* Django-style Header */
 .exploreHeader {
@@ -1156,7 +1112,7 @@
 }
 
 .viewBtn.active {
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
@@ -1220,7 +1176,7 @@
 }
 
 .filterBtn {
-  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   padding: 14px 24px;
@@ -1387,7 +1343,9 @@
   background: #4a0d9b;
 }
 
-/* Responsive Design for Django Layout */
+/* =============== Responsive Design =============== */
+
+/* Tablet and below */
 @media (max-width: 992px) {
   .exploreHeader {
     flex-direction: column;
@@ -1397,6 +1355,7 @@
   
   .headerLeft {
     justify-content: center;
+    flex-wrap: wrap;
   }
   
   .viewToggle {
@@ -1405,51 +1364,293 @@
   
   .searchFilterContainer {
     justify-content: center;
+    flex-wrap: wrap;
   }
   
-  .searchInput {
+  .filterSearchWrapper {
     width: 200px;
   }
 }
 
+/* Mobile devices - Match Dashboard Layout */
 @media (max-width: 768px) {
+  /* Breadcrumb */
+  .breadcrumb {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Explore Header */
+  .exploreHeader {
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
   .exploreTitle {
     font-size: 1.5rem;
   }
-  
+
+  .exploreSubtitle {
+    font-size: 0.9rem;
+  }
+
+  .headerLeft {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .headerText {
+    width: 100%;
+  }
+
+  .createCircleBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* View Toggle */
+  .viewToggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Search and Filter */
+  .searchFilterContainer {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .filterSearchWrapper {
+    width: 100%;
+  }
+
+  .searchInput {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
+
+  .sortSelect {
+    width: 100%;
+  }
+
+  .filterBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Circles Grid - Match Dashboard Card Style */
+  .circlesGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem; /* Match dashboard postCard margin-bottom */
+  }
+
+  /* Circle Cards - Match Dashboard Post Card Style */
+  .circleCard {
+    border-radius: 12px; /* Match dashboard postCard */
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.08);
+    margin-bottom: 0; /* Gap handles spacing */
+  }
+
+  .circleCard:hover {
+    transform: translateY(-4px); /* Match dashboard hover */
+  }
+
+  .circleCardHeader {
+    height: 120px;
+  }
+
+  .circleName {
+    font-size: 18px;
+  }
+
+  .circleDescription {
+    font-size: 14px;
+    min-height: auto;
+  }
+
+  /* List View */
+  .circlesList {
+    gap: 1.5rem; /* Match dashboard postCard margin-bottom */
+  }
+
   .circleListItem {
     flex-direction: column;
     text-align: center;
+    padding: 1rem;
+    border-radius: 12px; /* Match dashboard postCard */
+    margin-bottom: 0; /* Gap handles spacing */
   }
   
   .listImage {
     margin-right: 0;
     margin-bottom: 1rem;
+    width: 100%;
+    height: 150px;
+    border-radius: 12px;
   }
   
+  .listContent {
+    width: 100%;
+    text-align: center;
+  }
+
+  .listName {
+    font-size: 1.1rem;
+  }
+
   .listActions {
     width: 100%;
     flex-direction: row;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .listViewBtn,
+  .listJoinBtn {
+    flex: 1;
+  }
+
+  /* Section - Match Dashboard spacing */
+  .section {
+    margin-bottom: 0; /* Gap in grid handles spacing */
+  }
+
+  /* Empty State - Match Dashboard style */
+  .emptyState {
+    padding: 40px 20px;
+    border-radius: 12px; /* Match dashboard */
+    background-color: #f8f9fa; /* Match dashboard emptyFeed */
+    margin: 20px auto;
+    text-align: center;
+  }
+
+  .emptyState i {
+    font-size: 60px;
+  }
+
+  .emptyState h3 {
+    font-size: 20px;
+  }
+
+  .emptyState p {
+    font-size: 14px;
+  }
+
+  /* Modal */
+  .modalContent {
+    max-height: 90vh;
+    margin: 10px;
+    border-radius: 16px;
+  }
+  
+  .modalHeader,
+  .modalBody,
+  .modalFooter {
+    padding: 16px;
+  }
+  
+  .modalFooter {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .saveBtn,
+  .cancelBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Cover Section */
+  .coverPreview {
+    height: 120px;
+  }
+
+  /* Form Elements */
+  .formGroup {
+    margin-bottom: 16px;
   }
 }
 
+/* Small mobile devices */
 @media (max-width: 576px) {
   .exploreTitle {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
   }
-  
-  .searchInput {
-    width: 100%;
+
+  .exploreSubtitle {
+    font-size: 0.85rem;
   }
-  
-  .searchFilterContainer {
+
+  .breadcrumb {
+    font-size: 0.8rem;
+  }
+
+  .circleCard {
+    border-radius: 12px;
+  }
+
+  .circleCardBody {
+    padding: 12px;
+  }
+
+  .cardActions {
     flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .viewCircleBtn,
+  .joinCircleBtn {
     width: 100%;
   }
-  
-  .filterBtn {
-    width: 100%;
-    justify-content: center;
+
+  .modalContent {
+    max-height: 95vh;
+    margin: 5px;
+  }
+
+  .modalHeader h3 {
+    font-size: 18px;
+  }
+
+  .formInput,
+  .formTextarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 400px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .exploreTitle {
+    font-size: 1.25rem;
+  }
+
+  .createCircleBtn {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+
+  .viewBtn {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .circleCardHeader {
+    height: 80px;
+  }
+
+  .emptyState {
+    padding: 1.5rem 0.75rem;
+  }
+
+  .emptyState i {
+    font-size: 50px;
   }
 }
 

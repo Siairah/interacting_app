@@ -7,6 +7,21 @@ type SignupStep = "register" | "verify-otp" | "profile";
 
 export default function Signup() {
   const router = useRouter();
+  
+  // Check if user is already logged in (using Socket.IO)
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { ensureAuth } = await import('@/utils/socketAuth');
+      const { token, userId } = await ensureAuth();
+      
+      // If already logged in, redirect to dashboard
+      if (token && userId) {
+        router.replace('/dashboard');
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
   const [step, setStep] = useState<SignupStep>("register");
   const [showPasswords, setShowPasswords] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -28,6 +43,21 @@ export default function Signup() {
   const [toast, setToast] = useState<{ type: string; message: string } | null>(
     null
   );
+
+  // Check if user is already logged in (using Socket.IO)
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { ensureAuth } = await import('@/utils/socketAuth');
+      const { token, userId } = await ensureAuth();
+      
+      // If already logged in, redirect to dashboard
+      if (token && userId) {
+        router.replace('/dashboard');
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
 
   // Auto-hide toast after 4s
   useEffect(() => {
@@ -92,6 +122,8 @@ export default function Signup() {
         console.error('Response not ok:', response.status, response.statusText);
         const text = await response.text();
         console.error('Response text:', text);
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const sanitizedText = sanitizeErrorMessage(text);
         return false;
       }
       

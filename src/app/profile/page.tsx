@@ -664,10 +664,25 @@ export default function ProfilePage() {
                         <div className={styles.postMedia}>
                           {post.media_files.length === 1 ? (
                             post.media_files[0].type === 'video' ? (
-                              <div className={styles.singleMedia} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', backgroundColor: '#f0f0f0', borderRadius: '8px', minHeight: '200px' }}>
-                                <i className="fas fa-video" style={{ fontSize: '48px', color: '#999', marginBottom: '10px' }}></i>
-                                <p style={{ color: '#999' }}>Video playback not supported</p>
-                              </div>
+                              <video 
+                                src={post.media_files[0].file} 
+                                controls 
+                                className={styles.singleMedia}
+                                preload="metadata"
+                                playsInline
+                                style={{ 
+                                  width: '100%', 
+                                  maxHeight: '600px', 
+                                  height: 'auto', 
+                                  objectFit: 'contain', 
+                                  borderRadius: '8px',
+                                  backgroundColor: '#000'
+                                }}
+                              >
+                                <source src={post.media_files[0].file} type="video/mp4" />
+                                <source src={post.media_files[0].file} type="video/webm" />
+                                Your browser does not support the video tag.
+                              </video>
                             ) : (
                               <img src={post.media_files[0].file} alt="Post media" className={styles.singleMedia} />
                             )
@@ -676,10 +691,14 @@ export default function ProfilePage() {
                               {post.media_files.map((media, index) => (
                                 <div key={index} className={styles.mediaItem}>
                                   {media.type === 'video' ? (
-                                    <div className={styles.mediaFile} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', backgroundColor: '#f0f0f0', borderRadius: '8px', minHeight: '150px' }}>
-                                      <i className="fas fa-video" style={{ fontSize: '32px', color: '#999', marginBottom: '8px' }}></i>
-                                      <span style={{ color: '#999', fontSize: '12px' }}>Video not supported</span>
-                                    </div>
+                                    <video 
+                                      src={media.file} 
+                                      controls 
+                                      className={styles.mediaFile}
+                                      style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px' }}
+                                    >
+                                      Your browser does not support the video tag.
+                                    </video>
                                   ) : (
                                     <img src={media.file} alt={`Post media ${index + 1}`} className={styles.mediaFile} />
                                   )}
@@ -729,10 +748,14 @@ export default function ProfilePage() {
                   {gallery.map(item => (
                     <div key={item.id} className={styles.galleryItem} onClick={() => setSelectedMedia({url: item.file, type: item.type})}>
                       {item.type === 'video' ? (
-                        <div className={styles.galleryImg} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: '8px', minHeight: '200px' }}>
-                          <i className="fas fa-video" style={{ fontSize: '32px', color: '#999', marginBottom: '8px' }}></i>
-                          <span style={{ color: '#999', fontSize: '12px' }}>Video not supported</span>
-                        </div>
+                        <video 
+                          src={item.file} 
+                          controls 
+                          className={styles.galleryImg}
+                          style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px' }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
                       ) : (
                         <img src={item.file} className={styles.galleryImg} alt="Gallery item" />
                       )}
@@ -847,10 +870,25 @@ export default function ProfilePage() {
                           <div className={styles.postMedia}>
                             {post.media_files.length === 1 ? (
                               post.media_files[0].type === 'video' ? (
-                                <div className={styles.singleMedia} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', backgroundColor: '#f0f0f0', borderRadius: '8px', minHeight: '200px' }}>
-                                  <i className="fas fa-video" style={{ fontSize: '48px', color: '#999', marginBottom: '10px' }}></i>
-                                  <p style={{ color: '#999' }}>Video playback not supported</p>
-                                </div>
+                                <video 
+                                  src={post.media_files[0].file} 
+                                  controls 
+                                  className={styles.singleMedia}
+                                  preload="metadata"
+                                  playsInline
+                                  style={{ 
+                                    width: '100%', 
+                                    maxHeight: '600px', 
+                                    height: 'auto', 
+                                    objectFit: 'contain',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#000'
+                                  }}
+                                >
+                                  <source src={post.media_files[0].file} type="video/mp4" />
+                                  <source src={post.media_files[0].file} type="video/webm" />
+                                  Your browser does not support the video tag.
+                                </video>
                               ) : (
                                 <img src={post.media_files[0].file} alt="Post media" className={styles.singleMedia} />
                               )
@@ -859,10 +897,24 @@ export default function ProfilePage() {
                                 {post.media_files.map((media: MediaFile, index: number) => (
                                   <div key={index} className={styles.mediaItem}>
                                     {media.type === 'video' ? (
-                                      <div className={styles.mediaFile} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', backgroundColor: '#f0f0f0', borderRadius: '8px', minHeight: '150px' }}>
-                                        <i className="fas fa-video" style={{ fontSize: '32px', color: '#999', marginBottom: '8px' }}></i>
-                                        <span style={{ color: '#999', fontSize: '12px' }}>Video not supported</span>
-                                      </div>
+                                      <video 
+                                        src={media.file} 
+                                        controls 
+                                        className={styles.mediaFile}
+                                        preload="metadata"
+                                        playsInline
+                                        style={{ 
+                                          width: '100%', 
+                                          height: '150px', 
+                                          objectFit: 'contain',
+                                          borderRadius: '8px',
+                                          backgroundColor: '#000'
+                                        }}
+                                      >
+                                        <source src={media.file} type="video/mp4" />
+                                        <source src={media.file} type="video/webm" />
+                                        Your browser does not support the video tag.
+                                      </video>
                                     ) : (
                                       <img src={media.file} alt={`Post media ${index + 1}`} className={styles.mediaFile} />
                                     )}

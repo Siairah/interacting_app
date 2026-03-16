@@ -68,6 +68,11 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 80px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f0f4f8 100%);
+  background-color: #f8f9fa;
+  min-height: 100vh;
 }
 
 html, body {
@@ -75,12 +80,22 @@ html, body {
   overflow-x: hidden;
   font-family: 'Poppins', Arial, Helvetica, sans-serif;
   color: var(--text-primary);
-  background: var(--bg-secondary);
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f0f4f8 100%) !important;
+  background-color: #f8f9fa !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   padding: 0;
   transition: background-color 0.3s ease, color 0.3s ease;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  min-height: 100vh;
+}
+
+/* Ensure body background is always set, overriding any Bootstrap or other CSS */
+body {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f0f4f8 100%) !important;
+  background-color: #f8f9fa !important;
 }
 
 /* =============== Global Custom Scrollbar (Elegant & Professional) =============== */
@@ -111,6 +126,45 @@ html, body {
 * {
   scrollbar-width: thin;
   scrollbar-color: #667eea #f5f7fa;
+}
+
+/* Optimize images and media for smooth scrolling */
+img, video {
+  max-width: 100%;
+  height: auto;
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Prevent layout shifts during scroll */
+img[loading="lazy"] {
+  content-visibility: auto;
+}
+
+/* Mobile-specific scroll optimizations */
+@media (max-width: 768px) {
+  html, body {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+  }
+  
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Optimize scroll containers on mobile */
+  [class*="Container"],
+  [class*="container"],
+  [class*="feed"],
+  [class*="Feed"] {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+  }
 }
 
 * {
@@ -331,4 +385,11 @@ button[type="submit"]:hover, .primary-button:hover {
   .login-image { order: -1; }
   .welcome-text { font-size: 36px; }
   .welcome-slogan { font-size: 16px; }
+}
+
+/* Post Detail Page Background Fix */
+body.post-detail-page,
+html.post-detail-page {
+  background: transparent !important;
+  background-color: transparent !important;
 }

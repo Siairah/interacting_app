@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [postContent, setPostContent] = useState("");
+  const [postMedia, setPostMedia] = useState<File[]>([]);
   const [selectedCircle, setSelectedCircle] = useState<string | null>(null);
   const [showPostMenu, setShowPostMenu] = useState<string | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -193,32 +194,64 @@ export default function DashboardPage() {
   }
 
   async function handleCreatePost() {
-    if (!postContent.trim() || !user) return;
+    if (!user) return;
+    
+    // Allow posts with just media or just content
+    if (!postContent.trim() && (!postMedia || postMedia.length === 0)) {
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Please add content or media to your post', 'error');
+      return;
+    }
     
     try {
       // Use Socket.IO token for API call
       const { getAuthToken } = await import('@/utils/socketAuth');
       const token = getAuthToken();
       
+      // Use FormData to support media files
+      const formData = new FormData();
+      formData.append('content', postContent.trim());
+      formData.append('user_id', user.id);
+      if (selectedCircle) {
+        formData.append('circle_id', selectedCircle);
+      }
+      
+      // Append multiple media files
+      if (postMedia && postMedia.length > 0) {
+        postMedia.forEach((file) => {
+          formData.append('media', file);
+        });
+      }
+      
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/create-post`, {
         method: "POST",
         headers: { 
-          "Content-Type": "application/json",
           ...(token ? { "Authorization": `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({
-          user_id: user.id,
-          content: postContent,
-          circle_id: selectedCircle
-        })
+        body: formData
       });
       
       const data = await res.json();
       if (data.success) {
+        const { showToast } = await import('@/components/ToastContainer');
+        
+        // Check if post was flagged and sent to pending
+        if (data.flagged || !data.is_approved) {
+          const reason = data.flagged_reason ? ` Reason: ${data.flagged_reason}` : '';
+          showToast(`Post submitted for review. It will be visible after admin approval.${reason}`, 'warning');
+        } else {
+          showToast('Post created successfully', 'success');
+        }
+        
         setPostContent("");
+        setPostMedia([]);
         setSelectedCircle(null);
         setShowCreatePost(false);
         fetchPosts(user.id);
+      } else {
+        const { showToast } = await import('@/components/ToastContainer');
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to create post'), 'error');
       }
     } catch (error) {
       console.error("Error creating post:", error);
@@ -370,13 +403,45 @@ export default function DashboardPage() {
                   <h3>Create Post</h3>
                   <button onClick={() => setShowCreatePost(false)} className={styles.btnClose}>×</button>
                 </div>
-                <div className={styles.modalBody}>
+                <form onSubmit={(e) => { e.preventDefault(); handleCreatePost(); }} className={styles.modalBody}>
                   <textarea
                     value={postContent}
                     onChange={(e) => setPostContent(e.target.value)}
-                    placeholder="What&apos;s on your mind?"
+                    placeholder="What&apos;s on your mind? (Optional)"
                     className={styles.postTextarea}
                   />
+                  
+                  {/* Media Preview */}
+                  {postMedia.length > 0 && (
+                    <div className={styles.mediaPreviewGrid}>
+                      {postMedia.map((file, index) => (
+                        <div key={index} className={styles.mediaPreviewItem}>
+                          {file.type.startsWith('video/') ? (
+                            <video 
+                              src={URL.createObjectURL(file)} 
+                              controls
+                              className={styles.previewImage}
+                              style={{ maxHeight: '200px', width: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <img 
+                              src={URL.createObjectURL(file)} 
+                              alt={`Preview ${index + 1}`}
+                              className={styles.previewImage}
+                            />
+                          )}
+                          <button
+                            type="button"
+                            className={styles.removeMediaBtn}
+                            onClick={() => setPostMedia(postMedia.filter((_, i) => i !== index))}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
                   <select 
                     value={selectedCircle || ""} 
                     onChange={(e) => setSelectedCircle(e.target.value || null)}
@@ -387,8 +452,31 @@ export default function DashboardPage() {
                       <option key={circle.id} value={circle.id}>{circle.name}</option>
                     ))}
                   </select>
-                </div>
+                  
+                  <label htmlFor="mediaInput" className={styles.mediaLabel}>
+                    <i className="fas fa-camera"></i> Add Photos/Videos {postMedia.length > 0 && `(${postMedia.length})`}
+                  </label>
+                  
+                  <input
+                    type="file"
+                    id="mediaInput"
+                    className={styles.hiddenInput}
+                    accept="image/*,video/*"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        const mediaFiles = Array.from(e.target.files).filter(file => 
+                          file.type.startsWith('image/') || file.type.startsWith('video/')
+                        );
+                        setPostMedia([...postMedia, ...mediaFiles]);
+                      }
+                    }}
+                  />
+                </form>
                 <div className={styles.modalFooter}>
+                  <button onClick={() => setShowCreatePost(false)} className={styles.btnCancel}>
+                    Cancel
+                  </button>
                   <button onClick={handleCreatePost} className={styles.btnPost}>Post</button>
                 </div>
               </div>

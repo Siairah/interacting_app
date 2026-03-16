@@ -273,6 +273,14 @@
     height: calc(100vh - 80px);
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    will-change: scroll-position;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    scroll-snap-type: none;
+    scroll-padding: 0;
 }
 
 /* Custom scrollbar for feed container only (Elegant & Professional) */
@@ -307,6 +315,12 @@
     padding: 1rem 0.5rem 2rem 0.5rem;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    will-change: scroll-position;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 /* Custom scrollbar for sidebars (thinner & subtle) */
@@ -549,6 +563,12 @@
     position: relative;
     transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     animation: fadeInUp 0.5s ease-out;
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style paint;
 }
 
 @keyframes fadeInUp {
@@ -943,6 +963,92 @@
 .circleSelect:focus {
     outline: none;
     border-color: #6a14eb;
+}
+
+/* Media Preview Styles */
+.mediaPreviewGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.mediaPreviewItem {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 1;
+}
+
+.previewImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.removeMediaBtn {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.removeMediaBtn:hover {
+    background: rgba(255, 0, 0, 0.8);
+}
+
+.mediaLabel {
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    color: #6c757d;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    margin-top: 1rem;
+}
+
+.mediaLabel:hover {
+    background: #e9ecef;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.hiddenInput {
+    display: none;
+}
+
+.btnCancel {
+    padding: 0.75rem 1.5rem;
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-right: 0.75rem;
+}
+
+.btnCancel:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
 }
 
 .modalFooter {

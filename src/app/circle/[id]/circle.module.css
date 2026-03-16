@@ -1,41 +1,106 @@
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0;
-    margin-top: 70px;
-    height: calc(100vh - 70px);
-    background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf6 100%);
-    overflow-y: auto;
+/* Page Wrapper - Full Page Container */
+.pageWrapper {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f0f4f8 100%);
+    color: #212529;
+    min-height: 100vh;
+    width: 100%;
+    position: relative;
     overflow-x: hidden;
-    padding: 1.5rem 1.5rem 2rem 1.5rem;
-    scroll-behavior: smooth;
+    overflow-y: visible;
 }
 
-/* =============== Custom Scrollbar (Elegant) =============== */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
+    /* Account for fixed navigation bar (height: ~60px + padding) */
+    margin-top: 70px;
+    padding-top: 1.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-bottom: 2rem;
+    min-height: calc(100vh - 70px);
+    overflow-x: hidden;
+    overflow-y: visible;
+    scroll-behavior: smooth;
+    transition: padding-top 0.2s ease-in-out;
+    position: relative;
+    z-index: 1;
+}
+
+.compactTop {
+    padding-top: 72px;
+}
+
+/* Scroll to Top Button */
+.scrollToTopBtn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.3s ease-out forwards;
+}
+
+.scrollToTopBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+}
+
+.scrollToTopBtn:active {
+    transform: translateY(-1px);
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =============== Custom Scrollbar (Elegant & User-Friendly) =============== */
 .container::-webkit-scrollbar {
-    width: 10px;
+    width: 12px;
 }
 
 .container::-webkit-scrollbar-track {
-    background: transparent;
-    margin: 5px 0;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 10px;
+    margin: 10px 0;
 }
 
 .container::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
     border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
     transition: all 0.3s ease;
 }
 
 .container::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+    background: linear-gradient(180deg, #764ba2 0%, #667eea 100%);
+    box-shadow: 0 0 15px rgba(102, 126, 234, 0.6);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* Firefox scrollbar */
 .container {
     scrollbar-width: thin;
-    scrollbar-color: #667eea transparent;
+    scrollbar-color: #667eea rgba(0, 0, 0, 0.05);
 }
 
 /* Top Navigation - Modern Design (Match Login) */
@@ -49,6 +114,10 @@
     z-index: 1000;
     height: 70px;
 }
+
+/* Ensure navigation component is properly displayed */
+/* Note: Navigation component uses its own CSS module (Navigation.module.css) */
+/* The container margin-top accounts for the fixed navigation bar */
 
 .navContainer {
     max-width: 1200px;
@@ -343,13 +412,16 @@
     background: #4000b0;
 }
 
-/* Circle Hero Section - Modern Design */
+/* Circle Hero Section - Modern Design with Better Colors */
 .circleHero {
     position: relative;
-    border-radius: 20px;
-    margin-bottom: 30px;
-    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.1);
+    border-radius: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.15);
     animation: fadeInUp 0.6s ease-out;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid rgba(102, 126, 234, 0.1);
 }
 
 @keyframes fadeInUp {
@@ -365,11 +437,11 @@
 
 /* Circle Cover */
 .circleCover {
-    height: 400px;
+    height: 350px;
     background-size: cover;
     background-position: center;
     position: relative;
-    border-radius: 16px;
+    border-radius: 20px 20px 0 0;
 }
 
 .coverOverlay {
@@ -524,14 +596,14 @@
     gap: 0.5rem;
 }
 
-/* Content Grid */
-.contentGrid {
+/* Content Grid - Better Layout */
+.circleInfoSection {
     display: grid;
-    grid-template-columns: 350px 1fr;
-    gap: 2rem;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
     max-width: 1400px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 0;
 }
 
 /* Sidebar */
@@ -803,6 +875,12 @@
     padding: 1.5rem;
     box-shadow: 0 8px 30px rgba(102, 126, 234, 0.08);
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    contain: layout style paint;
 }
 
 .postCard:hover {
@@ -959,12 +1037,13 @@
 }
 
 .circleSidebar {
-    background: white;
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.08);
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     height: fit-content;
     transition: all 0.3s ease;
+    border: 1px solid rgba(102, 126, 234, 0.08);
 }
 
 .circleSidebar:hover {
@@ -973,10 +1052,18 @@
 }
 
 .circleMainContent {
-    background: white;
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.08);
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    overflow-x: hidden;
+    overflow-y: visible;
+    scroll-behavior: smooth;
+    border: 1px solid rgba(102, 126, 234, 0.08);
+}
+
+.circleMainContent.compactTop {
+    padding-top: 0;
 }
 
 .circleDescription {
@@ -1164,7 +1251,7 @@
 .postsGrid {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 20px;
 }
 
 .postUserAvatar {
@@ -1531,8 +1618,36 @@
 .modalFooter {
     display: flex;
     justify-content: flex-end;
+    gap: 1rem;
     padding-top: 1rem;
     border-top: 1px solid #e9ecef;
+}
+
+.btnCancel {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnCancel:hover {
+  background: #5a6268;
+}
+
+.existingMediaLabel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .btnPost {
@@ -1557,17 +1672,333 @@
     cursor: not-allowed;
 }
 
+/* =============== Mobile Responsive Design =============== */
 @media (max-width: 992px) {
-    .contentGrid {
+    .pageWrapper {
+        min-height: 100vh;
+        overflow-y: visible;
+    }
+
+    .container {
+        padding: 1rem;
+        /* On mobile, navbar moves to bottom, so adjust margin */
+        margin-top: 0;
+        padding-top: 1rem;
+        padding-bottom: 80px; /* Space for bottom navigation */
+        min-height: auto;
+    }
+
+    .circleInfoSection {
         grid-template-columns: 1fr;
+        gap: 16px;
     }
-    
-    .sidebar {
+
+    .circleSidebar {
         order: 2;
+        position: relative;
+        top: 0;
     }
-    
-    .postsSection {
+
+    .circleMainContent {
         order: 1;
+    }
+
+    .circleCover {
+        height: 250px;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .circleHero {
+        margin-bottom: 20px;
+    }
+
+    .scrollToTopBtn {
+        bottom: 20px;
+        right: 20px;
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
+    }
+
+    .postsGrid {
+        gap: 16px;
+    }
+
+    .sectionHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .createPostBtn {
+        width: 100%;
+        justify-content: center;
     }
 }
 
+@media (max-width: 768px) {
+    .pageWrapper {
+        min-height: 100vh;
+        overflow-y: visible;
+    }
+
+    .container {
+        padding: 0.75rem;
+        margin-top: 0;
+        padding-bottom: 80px; /* Space for bottom navigation */
+        min-height: auto;
+    }
+
+    .circleCover {
+        height: 200px;
+    }
+
+    .circleTitle {
+        font-size: 1.75rem;
+    }
+
+    .circleSubtitle {
+        font-size: 0.9rem;
+    }
+
+    .circleSidebar {
+        padding: 16px;
+    }
+
+    .circleMainContent {
+        padding: 16px;
+    }
+
+    .actionButtons {
+        gap: 0.75rem;
+    }
+
+    .actionBtn {
+        padding: 0.65rem 1.25rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .pageWrapper {
+        min-height: 100vh;
+        overflow-y: visible;
+    }
+
+    .container {
+        padding: 0.5rem;
+        margin-top: 0;
+        padding-bottom: 80px; /* Space for bottom navigation */
+        min-height: auto;
+    }
+
+    .circleCover {
+        height: 180px;
+    }
+
+    .circleTitle {
+        font-size: 1.5rem;
+    }
+
+    .circleSidebar,
+    .circleMainContent {
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    .scrollToTopBtn {
+        bottom: 80px; /* Above bottom navigation */
+        right: 15px;
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+}
+
+/* =============== Improved Color Variety =============== */
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.1);
+}
+
+.sectionTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2d3436;
+    margin: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.createPostBtn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.createPostBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Empty State Styling */
+.emptyState {
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 20px;
+    border: 2px dashed rgba(102, 126, 234, 0.2);
+}
+
+.emptyState i {
+    font-size: 4rem;
+    color: #667eea;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+}
+
+.emptyState h3 {
+    color: #2d3436;
+    margin-bottom: 0.5rem;
+}
+
+.emptyState p {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+/* Join Prompt Styling */
+.joinPrompt {
+    text-align: center;
+    padding: 50px 30px;
+    background: linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%);
+    border-radius: 20px;
+    border: 2px solid rgba(102, 126, 234, 0.15);
+}
+
+.joinPromptIcon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.joinPromptTitle {
+    color: #2d3436;
+    margin-bottom: 12px;
+    font-size: 1.5rem;
+}
+
+.joinPromptText {
+    color: #6c757d;
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.joinPromptBtn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.joinPromptBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Improved Circle Description */
+.circleDescription {
+    line-height: 1.8;
+    color: #495057;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    background: rgba(102, 126, 234, 0.03);
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+}
+
+/* Improved Circle Rules */
+.circleRules {
+    background: linear-gradient(135deg, rgba(108, 92, 231, 0.08) 0%, rgba(102, 126, 234, 0.05) 100%);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border-left: 4px solid #6c5ce7;
+    margin: 1.5rem 0;
+    box-shadow: 0 2px 10px rgba(108, 92, 231, 0.1);
+}
+
+.circleRules strong {
+    color: #6c5ce7;
+    display: block;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.circleRules ul {
+    padding-left: 1.2rem;
+    margin-top: 0.5rem;
+}
+
+.circleRules li {
+    margin-bottom: 0.5rem;
+    color: #495057;
+    line-height: 1.6;
+}
+
+/* Moderation Button */
+.moderationBtn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    text-align: center;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.moderationBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+    color: white;
+}

@@ -66,7 +66,7 @@ export default function ViewPostModal({
   const fetchPostDetails = async () => {
     setIsLoadingPost(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const { getApiUrl } = await import('@/utils/apiUtils');
       let currentUserId = localStorage.getItem('user_id');
       if (!currentUserId) {
         const userStr = localStorage.getItem('user');
@@ -81,11 +81,12 @@ export default function ViewPostModal({
       }
 
       const url = currentUserId
-        ? `${apiUrl}/get-post/${post.id}?user_id=${currentUserId}`
-        : `${apiUrl}/get-post/${post.id}`;
+        ? `${getApiUrl()}/get-post/${post.id}?user_id=${currentUserId}`
+        : `${getApiUrl()}/get-post/${post.id}`;
 
       const response = await fetch(url);
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
 
       if (data.success && data.post) {
         setPostData({
@@ -105,9 +106,10 @@ export default function ViewPostModal({
   const fetchAllComments = async () => {
     setIsLoadingComments(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/get-comments/${post.id}`);
-      const data = await response.json();
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/get-comments/${post.id}`);
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
 
       if (data.comments && Array.isArray(data.comments)) {
         const formattedComments: PostComment[] = data.comments.map((comment: any) => {
@@ -163,9 +165,8 @@ export default function ViewPostModal({
     try {
       const { getAuthToken } = await import('@/utils/socketAuth');
       const token = getAuthToken();
-      
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/delete-post/${postData.id}`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/delete-post/${postData.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -174,7 +175,8 @@ export default function ViewPostModal({
         body: JSON.stringify({ user_id: userId })
       });
 
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       if (data.success) {
         onClose();
         if (onPostDeleted) {
@@ -204,7 +206,8 @@ export default function ViewPostModal({
               const { getAuthToken } = await import('@/utils/socketAuth');
               const token = getAuthToken();
               
-              const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/toggle-like/${postId}`, {
+              const { getApiUrl } = await import('@/utils/apiUtils');
+              const response = await fetch(`${getApiUrl()}/toggle-like/${postId}`, {
                 method: 'POST',
                 headers: { 
                   'Content-Type': 'application/json',
@@ -213,7 +216,8 @@ export default function ViewPostModal({
                 body: JSON.stringify({ user_id: userId }),
               });
 
-        const data = await response.json();
+        const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
         if (data.success) {
           setPostData(prev => ({
             ...prev,

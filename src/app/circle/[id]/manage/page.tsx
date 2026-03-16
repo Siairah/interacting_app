@@ -1,469 +1,131 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Navigation from '@/components/Navigation';
+import ToastContainer from '@/components/ToastContainer';
+import ViewPostModal from '@/components/ViewPostModal';
+import { useCircleManagement } from './hooks/useCircleManagement';
+import { useCircleHandlers } from './hooks/useCircleHandlers';
+import { usePostViewer } from './hooks/usePostViewer';
+import TabNavigation from './components/TabNavigation';
+import OverviewTab from './components/OverviewTab';
+import RequestsTab from './components/RequestsTab';
+import MembersTab from './components/MembersTab';
+import PostsTab from './components/PostsTab';
+import FlaggedTab from './components/FlaggedTab';
+import ReportsTab from './components/ReportsTab';
+import RestrictedTab from './components/RestrictedTab';
+import BannedTab from './components/BannedTab';
 import styles from './manage.module.css';
 
-interface User {
-  id: string;
-  email: string;
-  full_name: string;
-  profile_pic: string | null;
-}
-
-interface Member {
-  id: string;
-  user: User;
-  is_admin: boolean;
-  joined_at: string;
-}
-
-interface PendingRequest {
-  id: string;
-  user: User;
-  message: string;
-  requested_at: string;
-}
-
-interface PendingPost {
-  id: string;
-  user: User;
-  content: string;
-  created_at: string;
-  media?: string[];
-}
-
-interface FlaggedPost {
-  id: string;
-  post: {
-    id: string;
-    content: string;
-    user: User;
-  };
-  reason: string;
-  flagged_by: User;
-  created_at: string;
-}
-
-interface ReportedPost {
-  id: string;
-  post: {
-    id: string;
-    content: string;
-    user: User;
-  };
-  reason: string;
-  reported_by: User;
-  created_at: string;
-}
-
-interface Circle {
-  id: string;
-  name: string;
-  description: string;
-  cover_image: string | null;
-  visibility: string;
-}
-
-interface ManagementData {
-  success: boolean;
-  message?: string;
-  circle: Circle;
-  members: Member[];
-  pending_requests: PendingRequest[];
-  pending_posts: PendingPost[];
-  flagged_posts: FlaggedPost[];
-  reported_posts: ReportedPost[];
-  admin_count: number;
-  pending_posts_count: number;
-  flagged_posts_count: number;
-  reported_posts_count: number;
-  total_pending: number;
-}
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+type TabType = 'overview' | 'requests' | 'members' | 'posts' | 'flagged' | 'reports' | 'restricted' | 'banned';
 
 export default function ManageCirclePage() {
   const params = useParams();
   const router = useRouter();
   const circleId = params.id as string;
 
-  const [circle, setCircle] = useState<Circle | null>(null);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
-  const [pendingPosts, setPendingPosts] = useState<PendingPost[]>([]);
-  const [flaggedPosts, setFlaggedPosts] = useState<FlaggedPost[]>([]);
-  const [reportedPosts, setReportedPosts] = useState<ReportedPost[]>([]);
-  const [adminCount, setAdminCount] = useState(0);
-  const [pendingPostsCount, setPendingPostsCount] = useState(0);
-  const [flaggedPostsCount, setFlaggedPostsCount] = useState(0);
-  const [reportedPostsCount, setReportedPostsCount] = useState(0);
-  const [totalPending, setTotalPending] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'requests' | 'members' | 'posts' | 'flagged' | 'reports'>('overview');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [overlayText, setOverlayText] = useState<string | null>(null);
+  
+  // Hide-on-scroll navbar state
+  const [isNavHidden, setIsNavHidden] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const lastScrollTopRef = useRef<number>(0);
+  const rafIdRef = useRef<number | null>(null);
+  const lastToggleTsRef = useRef<number>(0);
 
+  const {
+    loading,
+    userId,
+    circle,
+    managementData,
+    bannedUsers,
+    restrictedUsers,
+    refreshData,
+    fetchRestrictedUsers,
+    fetchBannedUsers
+  } = useCircleManagement(circleId);
+
+  const handlers = useCircleHandlers(circleId, userId, refreshData, setOverlayText);
+  const { selectedPost, showPostModal, handleViewPost, closeModal } = usePostViewer(userId);
+
+  // Refetch restricted users when the restricted tab is clicked
   useEffect(() => {
-    // Prefer explicit user_id, fallback to parsed 'user' object
-    let storedUserId = localStorage.getItem('user_id');
-    if (!storedUserId) {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        try {
-          const userObj = JSON.parse(userStr);
-          storedUserId = userObj.id || userObj._id || null;
-        } catch (_e) {
-          // ignore parse errors
-        }
-      }
+    if (activeTab === 'restricted' && userId) {
+      fetchRestrictedUsers();
     }
+  }, [activeTab, userId, fetchRestrictedUsers]);
 
-    if (storedUserId) {
-      setUserId(storedUserId);
-      fetchManagementData(storedUserId);
-    } else {
-      setLoading(false);
-      router.replace('/');
+  // Hide navbar on scroll down (after threshold), show on scroll up (small delta), with debounce
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+
+    const HIDE_THRESHOLD = 64;
+    const SHOW_DELTA = 3;
+    const MIN_TOGGLE_INTERVAL = 180;
+    const SCROLL_TO_TOP_THRESHOLD = 300;
+
+    const onScroll = () => {
+      if (rafIdRef.current) return;
+      rafIdRef.current = requestAnimationFrame(() => {
+        const now = performance.now();
+        if (now - lastToggleTsRef.current < MIN_TOGGLE_INTERVAL) {
+          rafIdRef.current = null;
+          return;
+        }
+
+        const current = el.scrollTop;
+        const last = lastScrollTopRef.current;
+
+        setShowScrollToTop(current > SCROLL_TO_TOP_THRESHOLD);
+
+        if (current <= 0) {
+          if (isNavHidden) {
+            setIsNavHidden(false);
+            lastToggleTsRef.current = now;
+          }
+        } else if (current > last + SHOW_DELTA && current > HIDE_THRESHOLD) {
+          if (!isNavHidden) {
+            setIsNavHidden(true);
+            lastToggleTsRef.current = now;
+          }
+        } else if (current < last - SHOW_DELTA) {
+          if (isNavHidden) {
+            setIsNavHidden(false);
+            lastToggleTsRef.current = now;
+          }
+        }
+
+        lastScrollTopRef.current = current;
+        rafIdRef.current = null;
+      });
+    };
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll as EventListener);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    };
+  }, [isNavHidden]);
+
+  const scrollToTop = () => {
+    if (contentRef.current) {
+      contentRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     }
-  }, [circleId, router]);
-
-  const fetchManagementData = async (uid: string) => {
-    try {
-      const response = await fetch(`${API_BASE}/circles/manage/${circleId}?user_id=${uid}`);
-      const data: ManagementData = await response.json();
-
-      if (data.success) {
-        setCircle(data.circle);
-        setMembers(data.members || []);
-        setPendingRequests(data.pending_requests || []);
-        setPendingPosts(data.pending_posts || []);
-        setFlaggedPosts(data.flagged_posts || []);
-        setReportedPosts(data.reported_posts || []);
-        setAdminCount(data.admin_count || 0);
-        setPendingPostsCount(data.pending_posts_count || 0);
-        setFlaggedPostsCount(data.flagged_posts_count || 0);
-        setReportedPostsCount(data.reported_posts_count || 0);
-        setTotalPending(data.total_pending || 0);
-      } else {
-        alert(data.message || 'Failed to load management data');
-        router.push(`/circle/${circleId}`);
-      }
-    } catch (error) {
-      console.error('Error fetching management data:', error);
-      alert('Failed to load management data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const withOverlay = async (text: string, fn: () => Promise<void>) => {
-    setOverlayText(text);
-    try {
-      await fn();
-    } finally {
-      setOverlayText(null);
-    }
-  };
-
-  const handleApproveRequest = async (requestId: string) => {
-    if (!userId) return;
-
-    await withOverlay('Approving request...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/approve-request/${requestId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to approve request');
-        }
-      } catch (error) {
-        console.error('Error approving request:', error);
-      }
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
     });
   };
 
-  const handleRejectRequest = async (requestId: string) => {
-    if (!userId) return;
-
-    await withOverlay('Rejecting request...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/reject-request/${requestId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to reject request');
-        }
-      } catch (error) {
-        console.error('Error rejecting request:', error);
-      }
-    });
-  };
-
-  const handlePromoteAdmin = async (memberId: string) => {
-    if (!userId) return;
-
-    if (adminCount >= 3) {
-      alert('Maximum 3 admins allowed per circle');
-      return;
-    }
-
-    await withOverlay('Promoting to admin...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/promote-admin`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            circle_id: circleId,
-            member_id: memberId
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to promote member');
-        }
-      } catch (error) {
-        console.error('Error promoting member:', error);
-      }
-    });
-  };
-
-  const handleRemoveAdmin = async (memberId: string) => {
-    if (!userId) return;
-
-    await withOverlay('Removing admin...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/remove-admin`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            circle_id: circleId,
-            member_id: memberId
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to remove admin');
-        }
-      } catch (error) {
-        console.error('Error removing admin:', error);
-      }
-    });
-  };
-
-  const handleRemoveMember = async (memberId: string) => {
-    if (!userId) return;
-
-    if (!confirm('Are you sure you want to remove this member?')) return;
-
-    await withOverlay('Removing member...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/remove-member`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            circle_id: circleId,
-            member_id: memberId
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to remove member');
-        }
-      } catch (error) {
-        console.error('Error removing member:', error);
-      }
-    });
-  };
-
-  const handleRestrictUser = async (memberId: string) => {
-    if (!userId) return;
-
-    if (!confirm('Restrict this user for 7 days?')) return;
-
-    await withOverlay('Restricting user...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/restrict-user`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            circle_id: circleId,
-            target_user_id: memberId,
-            days: 7
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          alert('User restricted for 7 days');
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to restrict user');
-        }
-      } catch (error) {
-        console.error('Error restricting user:', error);
-      }
-    });
-  };
-
-  const handleBanUser = async (memberId: string) => {
-    if (!userId) return;
-
-    if (!confirm('Are you sure you want to permanently ban this user from the circle?')) return;
-
-    await withOverlay('Banning user...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/ban-user`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userId,
-            circle_id: circleId,
-            target_user_id: memberId,
-            reason: 'Banned by admin'
-          })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          alert('User has been banned');
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to ban user');
-        }
-      } catch (error) {
-        console.error('Error banning user:', error);
-      }
-    });
-  };
-
-  const handleApprovePost = async (postId: string) => {
-    if (!userId) return;
-
-    await withOverlay('Approving post...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/approve-post/${postId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to approve post');
-        }
-      } catch (error) {
-        console.error('Error approving post:', error);
-      }
-    });
-  };
-
-  const handleRejectPost = async (postId: string) => {
-    if (!userId) return;
-
-    if (!confirm('Are you sure you want to reject this post?')) return;
-
-    await withOverlay('Rejecting post...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/reject-post/${postId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to reject post');
-        }
-      } catch (error) {
-        console.error('Error rejecting post:', error);
-      }
-    });
-  };
-
-  const handleApproveFlaggedPost = async (postId: string) => {
-    if (!userId) return;
-
-    await withOverlay('Approving flagged post...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/approve-flagged/${postId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to approve flagged post');
-        }
-      } catch (error) {
-        console.error('Error approving flagged post:', error);
-      }
-    });
-  };
-
-  const handleRejectFlaggedPost = async (postId: string) => {
-    if (!userId) return;
-
-    if (!confirm('Are you sure you want to reject this flagged post?')) return;
-
-    await withOverlay('Rejecting flagged post...', async () => {
-      try {
-        const response = await fetch(`${API_BASE}/circles/reject-flagged/${postId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          fetchManagementData(userId);
-        } else {
-          alert(data.message || 'Failed to reject flagged post');
-        }
-      } catch (error) {
-        console.error('Error rejecting flagged post:', error);
-      }
-    });
-  };
-
-  const filteredMembers = members.filter(member =>
-    member.user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    member.user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   if (loading) {
     return (
@@ -474,7 +136,7 @@ export default function ManageCirclePage() {
     );
   }
 
-  if (!circle) {
+  if (!circle || !managementData) {
     return (
       <div className={styles.errorContainer}>
         <h2>Circle Not Found</h2>
@@ -485,24 +147,71 @@ export default function ManageCirclePage() {
     );
   }
 
+  const {
+    members,
+    pending_requests,
+    pending_posts,
+    flagged_posts,
+    reported_posts,
+    admin_count,
+    pending_posts_count,
+    flagged_posts_count
+  } = managementData;
+
   return (
     <div className={styles.container}>
-      {/* Navbar */}
-      <nav className={styles.navbar}>
-        <div className={styles.navContainer}>
-          <Link href={`/circle/${circleId}`} className={styles.backButton}>
-            <i className="fas fa-arrow-left"></i> Back to Circle
-          </Link>
-          <h2 className={styles.pageTitle}>Manage {circle?.name}</h2>
-          <Link href="/dashboard" className={styles.homeButton}>
-            <i className="fas fa-home"></i>
-          </Link>
-        </div>
-      </nav>
+      <Navigation isHidden={isNavHidden} />
 
-      {/* Management Content */}
-      <div className={styles.content}>
-        {/* Dashboard Stats Cards */}
+      {showScrollToTop && (
+        <button
+          onClick={scrollToTop}
+          className={styles.scrollToTopBtn}
+          title="Scroll to top"
+        >
+          <i className="fas fa-chevron-up"></i>
+        </button>
+      )}
+
+      <div ref={contentRef} className={`${styles.content} ${isNavHidden ? styles.compactTop : ''}`}>
+        <div className={styles.pageHeader}>
+          <div className={styles.headerLeft}>
+            <h1 className={styles.pageTitle}>
+              <i className="fas fa-users-cog"></i>
+              {circle.name} Management
+            </h1>
+            <div className={styles.circleMeta}>
+              <span className={styles.metaBadge}>
+                <i className="fas fa-users"></i> {members.length} Members
+              </span>
+              <span className={styles.metaBadge}>
+                <i className="fas fa-user-shield"></i> {admin_count} Admins
+              </span>
+              <span className={styles.metaBadge}>
+                <i className="fas fa-clock"></i> {pending_requests.length} Pending
+              </span>
+              <span className={styles.metaBadge}>
+                <i className="fas fa-flag"></i> {flagged_posts_count} Flagged
+              </span>
+            </div>
+          </div>
+          <div className={styles.headerActions}>
+            <button
+              onClick={() => {
+                const newVisibility = circle.visibility === 'public' ? 'private' : 'public';
+                handlers.handleUpdateCircle({ visibility: newVisibility });
+              }}
+              className={styles.visibilityBtn}
+              title={`Change to ${circle.visibility === 'public' ? 'Private' : 'Public'}`}
+            >
+              <i className={`fas fa-${circle.visibility === 'public' ? 'lock' : 'globe'}`}></i>
+              Make {circle.visibility === 'public' ? 'Private' : 'Public'}
+            </button>
+            <Link href={`/circle/${circleId}`} className={styles.backLink}>
+              <i className="fas fa-arrow-left"></i> Back to Circle
+            </Link>
+          </div>
+        </div>
+
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
             <div className={styles.statValue}>{members.length}</div>
@@ -511,420 +220,113 @@ export default function ManageCirclePage() {
             </div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statValue}>{pendingRequests.length}</div>
+            <div className={styles.statValue}>{pending_requests.length}</div>
             <div className={styles.statLabel}>
               <i className="fas fa-user-plus"></i> Pending Requests
             </div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statValue}>{pendingPostsCount}</div>
+            <div className={styles.statValue}>{pending_posts_count}</div>
             <div className={styles.statLabel}>
               <i className="fas fa-file-upload"></i> Posts to Review
             </div>
           </div>
           <div className={styles.statCard}>
-            <div className={styles.statValue}>{flaggedPostsCount}</div>
+            <div className={styles.statValue}>{flagged_posts_count}</div>
             <div className={styles.statLabel}>
               <i className="fas fa-flag"></i> Flagged Items
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className={styles.tabNavigation}>
-          <button
-            className={`${styles.tabBtn} ${activeTab === 'overview' ? styles.active : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            <i className="fas fa-chart-bar"></i> Overview
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === 'requests' ? styles.active : ''}`}
-            onClick={() => setActiveTab('requests')}
-          >
-            <i className="fas fa-user-plus"></i> Join Requests
-            {pendingRequests.length > 0 && (
-              <span className={styles.badge}>{pendingRequests.length}</span>
-            )}
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === 'members' ? styles.active : ''}`}
-            onClick={() => setActiveTab('members')}
-          >
-            <i className="fas fa-users"></i> Members ({members.length})
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === 'posts' ? styles.active : ''}`}
-            onClick={() => setActiveTab('posts')}
-          >
-            <i className="fas fa-file-upload"></i> Pending Posts
-            {pendingPostsCount > 0 && (
-              <span className={styles.badge}>{pendingPostsCount}</span>
-            )}
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === 'flagged' ? styles.active : ''}`}
-            onClick={() => setActiveTab('flagged')}
-          >
-            <i className="fas fa-flag"></i> Flagged
-            {flaggedPostsCount > 0 && (
-              <span className={styles.badge}>{flaggedPostsCount}</span>
-            )}
-          </button>
-          <button
-            className={`${styles.tabBtn} ${activeTab === 'reports' ? styles.active : ''}`}
-            onClick={() => setActiveTab('reports')}
-          >
-            <i className="fas fa-exclamation-circle"></i> Reports
-            {reportedPostsCount > 0 && (
-              <span className={styles.badge}>{reportedPostsCount}</span>
-            )}
-          </button>
-        </div>
+        <TabNavigation
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          pendingRequests={pending_requests}
+          members={members}
+          pendingPostsCount={pending_posts_count}
+          flaggedPostsCount={flagged_posts_count}
+          reportedPosts={reported_posts}
+          restrictedUsers={restrictedUsers}
+          bannedUsers={bannedUsers}
+        />
 
-        {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div className={styles.tabContent}>
-            <h3 className={styles.sectionTitle}>Dashboard Overview</h3>
-            <div className={styles.gridLayout}>
-              <div className={styles.gridCard}>
-                <h4 className={styles.cardTitle}>
-                  <i className="fas fa-user-plus"></i> Recent Join Requests
-                </h4>
-                {pendingRequests.length === 0 ? (
-                  <p className={styles.emptyText}>No pending requests</p>
-                ) : (
-                  <div className={styles.miniList}>
-                    {pendingRequests.slice(0, 3).map((req) => (
-                      <div key={req.id} className={styles.miniItem}>
-                        <img src={req.user.profile_pic || '/images/default_profile.png'} alt={req.user.full_name} />
-                        <div className={styles.miniItemText}>
-                          <p className={styles.userName}>{req.user.full_name}</p>
-                          <p className={styles.miniMeta}>{new Date(req.requested_at).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className={styles.gridCard}>
-                <h4 className={styles.cardTitle}>
-                  <i className="fas fa-file-upload"></i> Pending Posts
-                </h4>
-                {pendingPostsCount === 0 ? (
-                  <p className={styles.emptyText}>No pending posts</p>
-                ) : (
-                  <p className={styles.highlightedCount}>{pendingPostsCount} posts waiting for approval</p>
-                )}
-              </div>
-
-              <div className={styles.gridCard}>
-                <h4 className={styles.cardTitle}>
-                  <i className="fas fa-flag"></i> Flagged Content
-                </h4>
-                {flaggedPostsCount === 0 ? (
-                  <p className={styles.emptyText}>No flagged content</p>
-                ) : (
-                  <p className={styles.highlightedCount}>{flaggedPostsCount} items need review</p>
-                )}
-              </div>
-
-              <div className={styles.gridCard}>
-                <h4 className={styles.cardTitle}>
-                  <i className="fas fa-shield-alt"></i> Admin Team
-                </h4>
-                <p className={styles.adminCount}>{adminCount} / 3 Admins</p>
-              </div>
-            </div>
-          </div>
+          <OverviewTab
+            pendingRequests={pending_requests}
+            pendingPostsCount={pending_posts_count}
+            flaggedPostsCount={flagged_posts_count}
+            adminCount={admin_count}
+            circle={circle}
+            onUpdateCircle={handlers.handleUpdateCircle}
+          />
         )}
 
-        {/* Join Requests Tab */}
         {activeTab === 'requests' && (
-          <div className={styles.tabContent}>
-            <h3 className={styles.sectionTitle}>Pending Join Requests</h3>
-            {pendingRequests.length === 0 ? (
-              <div className={styles.emptyState}>
-                <i className="fas fa-inbox"></i>
-                <p>No pending join requests</p>
-              </div>
-            ) : (
-              <div className={styles.requestList}>
-                {pendingRequests.map((request) => (
-                  <div key={request.id} className={styles.requestCard}>
-                    <img
-                      src={request.user.profile_pic || '/images/default_profile.png'}
-                      alt={request.user.full_name}
-                      className={styles.userAvatar}
-                    />
-                    <div className={styles.requestInfo}>
-                      <h4>{request.user.full_name}</h4>
-                      <p className={styles.userEmail}>{request.user.email}</p>
-                      {request.message && (
-                        <p className={styles.requestMessage}>{request.message}</p>
-                      )}
-                      <span className={styles.requestDate}>
-                        {new Date(request.requested_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className={styles.requestActions}>
-                      <button
-                        onClick={() => handleApproveRequest(request.id)}
-                        className={styles.approveBtn}
-                      >
-                        <i className="fas fa-check"></i> Approve
-                      </button>
-                      <button
-                        onClick={() => handleRejectRequest(request.id)}
-                        className={styles.rejectBtn}
-                      >
-                        <i className="fas fa-times"></i> Reject
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <RequestsTab
+            pendingRequests={pending_requests}
+            onApprove={handlers.handleApproveRequest}
+            onReject={handlers.handleRejectRequest}
+          />
         )}
 
-        {/* Members Tab */}
         {activeTab === 'members' && (
-          <div className={styles.tabContent}>
-            <div className={styles.sectionHeader}>
-              <h3 className={styles.sectionTitle}>Circle Members</h3>
-              <input
-                type="text"
-                placeholder="Search members..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={styles.searchInput}
-              />
-            </div>
-            {members.filter(m => m.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
-              <div className={styles.emptyState}>
-                <i className="fas fa-users-slash"></i>
-                <p>No members found</p>
-              </div>
-            ) : (
-              <div className={styles.memberList}>
-                {members.filter(m => m.user.full_name.toLowerCase().includes(searchQuery.toLowerCase())).map((member) => (
-                  <div key={member.id} className={styles.memberCard}>
-                    <img
-                      src={member.user.profile_pic || '/images/default_profile.png'}
-                      alt={member.user.full_name}
-                      className={styles.userAvatar}
-                    />
-                    <div className={styles.memberInfo}>
-                      <h4>
-                        {member.user.full_name}
-                        {member.is_admin && (
-                          <span className={styles.adminBadge}>Admin</span>
-                        )}
-                      </h4>
-                      <p className={styles.userEmail}>{member.user.email}</p>
-                      <span className={styles.joinedDate}>
-                        Joined {new Date(member.joined_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className={styles.memberActions}>
-                      <button className={styles.actionBtn} title="More actions">
-                        <i className="fas fa-ellipsis-v"></i>
-                      </button>
-                      <div className={styles.dropdown}>
-                        {!member.is_admin && (
-                          <button onClick={() => handlePromoteAdmin(member.user.id)}>
-                            <i className="fas fa-user-shield"></i> Make Admin
-                          </button>
-                        )}
-                        {member.is_admin && (
-                          <button onClick={() => handleRemoveAdmin(member.user.id)}>
-                            <i className="fas fa-user-minus"></i> Remove Admin
-                          </button>
-                        )}
-                        <button onClick={() => handleRestrictUser(member.user.id)}>
-                          <i className="fas fa-user-clock"></i> Restrict (7 days)
-                        </button>
-                        <button onClick={() => handleBanUser(member.user.id)}>
-                          <i className="fas fa-ban"></i> Ban User
-                        </button>
-                        <button onClick={() => handleRemoveMember(member.user.id)}>
-                          <i className="fas fa-user-times"></i> Remove
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <MembersTab
+            members={members}
+            adminCount={admin_count}
+            onPromoteAdmin={(userId) => handlers.handlePromoteAdmin(userId, admin_count)}
+            onRemoveAdmin={handlers.handleRemoveAdmin}
+            onRestrictUser={handlers.handleRestrictUser}
+            onBanUser={handlers.handleBanUser}
+            onRemoveMember={handlers.handleRemoveMember}
+          />
         )}
 
-        {/* Pending Posts Tab */}
         {activeTab === 'posts' && (
-          <div className={styles.tabContent}>
-            <h3 className={styles.sectionTitle}>Pending Posts for Approval</h3>
-            {pendingPostsCount === 0 ? (
-              <div className={styles.emptyState}>
-                <i className="fas fa-check-circle"></i>
-                <p>No pending posts to review</p>
-              </div>
-            ) : (
-              <div className={styles.postList}>
-                {pendingPosts.map((post) => (
-                  <div key={post.id} className={styles.postCard}>
-                    <img
-                      src={post.user.profile_pic || '/images/default_profile.png'}
-                      alt={post.user.full_name}
-                      className={styles.userAvatar}
-                    />
-                    <div className={styles.postInfo}>
-                      <h4>{post.user.full_name}</h4>
-                      <p className={styles.postContent}>{post.content}</p>
-                      <span className={styles.postDate}>
-                        {new Date(post.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className={styles.postActions}>
-                      <button
-                        onClick={() => handleApprovePost(post.id)}
-                        className={styles.approveBtn}
-                        title="Approve this post"
-                      >
-                        <i className="fas fa-check"></i>
-                      </button>
-                      <button
-                        onClick={() => handleRejectPost(post.id)}
-                        className={styles.rejectBtn}
-                        title="Reject this post"
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <PostsTab
+            pendingPosts={pending_posts}
+            onApprove={handlers.handleApprovePost}
+            onReject={handlers.handleRejectPost}
+          />
         )}
 
-        {/* Flagged Posts Tab */}
         {activeTab === 'flagged' && (
-          <div className={styles.tabContent}>
-            <h3 className={styles.sectionTitle}>Flagged Content (NSFW / Inappropriate)</h3>
-            {flaggedPostsCount === 0 ? (
-              <div className={styles.emptyState}>
-                <i className="fas fa-check-circle"></i>
-                <p>No flagged content to review</p>
-              </div>
-            ) : (
-              <div className={styles.postList}>
-                {flaggedPosts.map((flagged) => (
-                  <div key={flagged.id} className={styles.flaggedPostCard}>
-                    <div className={styles.flagBadge}>
-                      <i className="fas fa-flag"></i> Flagged
-                    </div>
-                    <img
-                      src={flagged.post.user.profile_pic || '/images/default_profile.png'}
-                      alt={flagged.post.user.full_name}
-                      className={styles.userAvatar}
-                    />
-                    <div className={styles.postInfo}>
-                      <h4>{flagged.post.user.full_name}</h4>
-                      <p className={styles.postContent}>{flagged.post.content}</p>
-                      <p className={styles.flagReason}>
-                        <strong>Reason:</strong> {flagged.reason}
-                      </p>
-                      <p className={styles.flaggedBy}>
-                        <strong>Flagged by:</strong> {flagged.flagged_by.full_name}
-                      </p>
-                      <span className={styles.postDate}>
-                        {new Date(flagged.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className={styles.postActions}>
-                      <button
-                        onClick={() => handleApproveFlaggedPost(flagged.post.id)}
-                        className={styles.approveBtn}
-                        title="Approve - keep the post visible"
-                      >
-                        <i className="fas fa-check"></i>
-                      </button>
-                      <button
-                        onClick={() => handleRejectFlaggedPost(flagged.post.id)}
-                        className={styles.rejectBtn}
-                        title="Reject - delete the post"
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <FlaggedTab
+            flaggedPosts={flagged_posts}
+            onViewPost={handleViewPost}
+            onApprove={handlers.handleApproveFlaggedPost}
+            onReject={handlers.handleRejectFlaggedPost}
+          />
         )}
 
-        {/* Reported Posts Tab */}
         {activeTab === 'reports' && (
-          <div className={styles.tabContent}>
-            <h3 className={styles.sectionTitle}>User Reports</h3>
-            {reportedPostsCount === 0 ? (
-              <div className={styles.emptyState}>
-                <i className="fas fa-inbox"></i>
-                <p>No reported posts</p>
-              </div>
-            ) : (
-              <div className={styles.postList}>
-                {reportedPosts.map((report) => (
-                  <div key={report.id} className={styles.reportedPostCard}>
-                    <div className={styles.reportBadge}>
-                      <i className="fas fa-exclamation-circle"></i> Reported
-                    </div>
-                    <img
-                      src={report.post.user.profile_pic || '/images/default_profile.png'}
-                      alt={report.post.user.full_name}
-                      className={styles.userAvatar}
-                    />
-                    <div className={styles.postInfo}>
-                      <h4>{report.post.user.full_name}</h4>
-                      <p className={styles.postContent}>{report.post.content}</p>
-                      <p className={styles.reportReason}>
-                        <strong>Report:</strong> {report.reason}
-                      </p>
-                      <p className={styles.reportedBy}>
-                        <strong>Reported by:</strong> {report.reported_by.full_name}
-                      </p>
-                      <span className={styles.postDate}>
-                        {new Date(report.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className={styles.postActions}>
-                      <button
-                        onClick={() => handleApprovePost(report.post.id)}
-                        className={styles.approveBtn}
-                        title="Approve - keep the post"
-                      >
-                        <i className="fas fa-check"></i>
-                      </button>
-                      <button
-                        onClick={() => handleRejectPost(report.post.id)}
-                        className={styles.rejectBtn}
-                        title="Remove - delete the post"
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <ReportsTab
+            reportedPosts={reported_posts}
+            onViewPost={handleViewPost}
+            onApprove={handlers.handleApprovePost}
+            onReject={handlers.handleRejectPost}
+          />
+        )}
+
+        {activeTab === 'restricted' && (
+          <RestrictedTab
+            restrictedUsers={restrictedUsers}
+            onUnrestrict={(restrictedUserId, userName) =>
+              handlers.handleUnrestrictUser(restrictedUserId, userName, fetchRestrictedUsers)
+            }
+          />
+        )}
+
+        {activeTab === 'banned' && (
+          <BannedTab
+            bannedUsers={bannedUsers}
+            onUnban={(userId) =>
+              handlers.handleUnbanUser(userId, fetchBannedUsers, fetchRestrictedUsers)
+            }
+          />
         )}
       </div>
 
-      {/* Overlay Loader */}
       {overlayText && (
         <div className={styles.overlayLoader}>
           <div className={styles.overlayBox}>
@@ -933,7 +335,17 @@ export default function ManageCirclePage() {
           </div>
         </div>
       )}
+
+      <ToastContainer />
+
+      {showPostModal && selectedPost && (
+        <ViewPostModal
+          post={selectedPost}
+          userId={userId || undefined}
+          isOpen={showPostModal}
+          onClose={closeModal}
+        />
+      )}
     </div>
   );
 }
-

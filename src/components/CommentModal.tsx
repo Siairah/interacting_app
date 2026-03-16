@@ -69,15 +69,15 @@ export default function CommentModal({
   const fetchAllComments = async () => {
     setIsLoadingComments(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      // Use Socket.IO token for API call
+      const { getApiUrl } = await import('@/utils/apiUtils');
       const { getAuthToken } = await import('@/utils/socketAuth');
       const token = getAuthToken();
       
-      const response = await fetch(`${apiUrl}/get-comments/${post.id}`, {
+      const response = await fetch(`${getApiUrl()}/get-comments/${post.id}`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
 
       if (data.comments && Array.isArray(data.comments)) {
         // Transform backend comments to match PostComment type

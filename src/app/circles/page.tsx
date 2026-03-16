@@ -90,10 +90,13 @@ export default function CirclesPage() {
       const token = getAuthToken();
       
       // Fetch ALL circles with membership status (updated API)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/circles/list?user_id=${userId}`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/circles/list?user_id=${userId}`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<{ success: boolean; circles?: Circle[]; message?: string }>(response);
       
       console.log("📦 Circles API response:", data);
       
@@ -203,15 +206,17 @@ export default function CirclesPage() {
 
       // Use Socket.IO token for API call
       const { getAuthToken } = await import('@/utils/socketAuth');
+      const { getApiUrl } = await import('@/utils/apiUtils');
       const token = getAuthToken();
       
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/circles/create`, {
+      const res = await fetch(`${getApiUrl()}/circles/create`, {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         body: formData
       });
 
-      const data = await res.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
       
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to create circle');
@@ -239,9 +244,10 @@ export default function CirclesPage() {
     try {
       // Use Socket.IO token for API call
       const { getAuthToken } = await import('@/utils/socketAuth');
+      const { getApiUrl } = await import('@/utils/apiUtils');
       const token = getAuthToken();
       
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/circles/join`, {
+      const res = await fetch(`${getApiUrl()}/circles/join`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -253,7 +259,8 @@ export default function CirclesPage() {
         })
       });
 
-      const data = await res.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
       
       if (data.success) {
         const { showToast } = await import('@/components/ToastContainer');

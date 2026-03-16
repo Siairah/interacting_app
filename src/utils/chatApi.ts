@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+import { safeJson, getApiUrl } from './apiUtils';
 
 export interface ChatRoom {
   id: string;
@@ -39,11 +39,11 @@ export interface ChatMessage {
 export async function getChatRooms(userId: string, circleId?: string): Promise<ChatRoom[]> {
   try {
     const url = circleId 
-      ? `${API_URL}/chat/get-rooms?user_id=${userId}&circle_id=${circleId}`
-      : `${API_URL}/chat/get-rooms?user_id=${userId}`;
+      ? `${getApiUrl()}/chat/get-rooms?user_id=${userId}&circle_id=${circleId}`
+      : `${getApiUrl()}/chat/get-rooms?user_id=${userId}`;
     
     const res = await fetch(url);
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     
     if (data.success && data.rooms) {
       const rooms = data.rooms.map((room: any) => ({
@@ -66,8 +66,8 @@ export async function getChatRooms(userId: string, circleId?: string): Promise<C
 
 export async function getChatMessages(roomId: string, userId: string, limit: number = 50): Promise<ChatMessage[]> {
   try {
-    const res = await fetch(`${API_URL}/chat/get-messages?room_id=${roomId}&user_id=${userId}&limit=${limit}`);
-    const data = await res.json();
+    const res = await fetch(`${getApiUrl()}/chat/get-messages?room_id=${roomId}&user_id=${userId}&limit=${limit}`);
+    const data = await safeJson<any>(res);
     
     if (data.success && data.messages) {
       // Format messages properly and filter out messages deleted by this user
@@ -128,12 +128,12 @@ export async function sendMessage(
       formData.append('reply_to', replyTo);
     }
 
-    const res = await fetch(`${API_URL}/chat/send-message`, {
+    const res = await fetch(`${getApiUrl()}/chat/send-message`, {
       method: 'POST',
       body: formData,
     });
 
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     return data;
   } catch (error) {
     console.error('Error sending message:', error);
@@ -147,7 +147,7 @@ export async function deleteMessage(
   deleteForEveryone: boolean = false
 ): Promise<{ success: boolean; message?: string }> {
   try {
-    const res = await fetch(`${API_URL}/chat/delete-message`, {
+    const res = await fetch(`${getApiUrl()}/chat/delete-message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -157,7 +157,7 @@ export async function deleteMessage(
       }),
     });
 
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     return data;
   } catch (error) {
     console.error('Error deleting message:', error);
@@ -171,7 +171,7 @@ export async function removeGroupMember(
   memberId: string
 ): Promise<{ success: boolean; room?: ChatRoom; message?: string }> {
   try {
-    const res = await fetch(`${API_URL}/chat/remove-member`, {
+    const res = await fetch(`${getApiUrl()}/chat/remove-member`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -181,7 +181,7 @@ export async function removeGroupMember(
       }),
     });
 
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     return data;
   } catch (error) {
     console.error('Error removing member:', error);
@@ -194,7 +194,7 @@ export async function leaveGroup(
   userId: string
 ): Promise<{ success: boolean; message?: string }> {
   try {
-    const res = await fetch(`${API_URL}/chat/leave-group`, {
+    const res = await fetch(`${getApiUrl()}/chat/leave-group`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -203,7 +203,7 @@ export async function leaveGroup(
       }),
     });
 
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     return data;
   } catch (error) {
     console.error('Error leaving group:', error);
@@ -217,7 +217,7 @@ export async function addGroupMembers(
   memberIds: string[]
 ): Promise<{ success: boolean; room?: ChatRoom; message?: string }> {
   try {
-    const res = await fetch(`${API_URL}/chat/add-member`, {
+    const res = await fetch(`${getApiUrl()}/chat/add-member`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -227,7 +227,7 @@ export async function addGroupMembers(
       }),
     });
 
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     return data;
   } catch (error) {
     console.error('Error adding members:', error);
@@ -240,7 +240,7 @@ export async function deleteGroup(
   userId: string
 ): Promise<{ success: boolean; message?: string }> {
   try {
-    const res = await fetch(`${API_URL}/chat/delete-group`, {
+    const res = await fetch(`${getApiUrl()}/chat/delete-group`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -249,7 +249,7 @@ export async function deleteGroup(
       }),
     });
 
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     return data;
   } catch (error) {
     console.error('Error deleting group:', error);
@@ -259,7 +259,7 @@ export async function deleteGroup(
 
 export async function createDM(user1Id: string, user2Id: string): Promise<{ success: boolean; room?: ChatRoom; error?: string }> {
   try {
-    const res = await fetch(`${API_URL}/chat/create-dm`, {
+    const res = await fetch(`${getApiUrl()}/chat/create-dm`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -268,7 +268,7 @@ export async function createDM(user1Id: string, user2Id: string): Promise<{ succ
       }),
     });
 
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     return data;
   } catch (error) {
     console.error('Error creating DM:', error);
@@ -283,7 +283,7 @@ export async function createGroupInCircle(
   memberIds: string[]
 ): Promise<{ success: boolean; room?: ChatRoom; error?: string; message?: string }> {
   try {
-    const res = await fetch(`${API_URL}/chat/create-group-in-circle`, {
+    const res = await fetch(`${getApiUrl()}/chat/create-group-in-circle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -294,7 +294,7 @@ export async function createGroupInCircle(
       }),
     });
 
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     if (!data.success) {
       return { 
         success: false, 
@@ -318,7 +318,7 @@ export async function getCircleMembers(circleId: string, userId: string): Promis
     const { getAuthToken } = await import('@/utils/socketAuth');
     const token = getAuthToken();
     
-    const url = `${API_URL}/chat/get-circle-members?circle_id=${circleId}&user_id=${userId}`;
+    const url = `${getApiUrl()}/chat/get-circle-members?circle_id=${circleId}&user_id=${userId}`;
     console.log('Fetching circle members from:', url);
     
     const res = await fetch(url, {
@@ -326,13 +326,18 @@ export async function getCircleMembers(circleId: string, userId: string): Promis
     });
     
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
+      let errorData: any = {};
+      try {
+        errorData = await safeJson<any>(res);
+      } catch {
+        // Response was HTML or invalid JSON
+      }
       const errorMessage = errorData.message || `Server error: ${res.status} ${res.statusText}`;
       console.error('Failed to fetch circle members:', res.status, res.statusText, errorMessage);
       throw new Error(errorMessage);
     }
     
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     console.log('Circle members response:', data);
     
     if (data.success && data.members) {
@@ -359,7 +364,7 @@ export async function getCircleMembers(circleId: string, userId: string): Promis
 
 export async function markMessagesAsSeen(roomId: string, userId: string): Promise<{ success: boolean; message?: string }> {
   try {
-    const res = await fetch(`${API_URL}/chat/mark-messages-seen`, {
+    const res = await fetch(`${getApiUrl()}/chat/mark-messages-seen`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -368,7 +373,7 @@ export async function markMessagesAsSeen(roomId: string, userId: string): Promis
       }),
     });
 
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     return data;
   } catch (error) {
     console.error('Error marking messages as seen:', error);
@@ -387,12 +392,12 @@ export async function updateGroupAvatar(
     formData.append('user_id', userId);
     formData.append('avatar', avatarFile);
 
-    const res = await fetch(`${API_URL}/chat/update-group-avatar`, {
+    const res = await fetch(`${getApiUrl()}/chat/update-group-avatar`, {
       method: 'POST',
       body: formData,
     });
 
-    const data = await res.json();
+    const data = await safeJson<any>(res);
     return data;
   } catch (error) {
     console.error('Error updating group avatar:', error);

@@ -39,8 +39,21 @@ export default function PostMedia({ mediaFiles, postId }: PostMediaProps) {
                 src={media.file} 
                 controls 
                 className={styles.postMedia}
-                style={{ width: '100%', maxHeight: '400px', height: 'auto', objectFit: 'contain', borderRadius: '12px' }}
+                preload="metadata"
+                playsInline
+                style={{ borderRadius: '12px' }}
+                onError={(e) => {
+                  console.error('Video load error:', e);
+                  const target = e.target as HTMLVideoElement;
+                  target.style.display = 'none';
+                  const errorDiv = document.createElement('div');
+                  errorDiv.innerHTML = '<p style="padding: 20px; color: #999;">Unable to load video</p>';
+                  target.parentElement?.appendChild(errorDiv);
+                }}
               >
+                <source src={media.file} type="video/mp4" />
+                <source src={media.file} type="video/webm" />
+                <source src={media.file} type="video/ogg" />
                 Your browser does not support the video tag.
               </video>
             ) : (

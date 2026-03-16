@@ -44,13 +44,15 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/login`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const res = await fetch(`${getApiUrl()}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
       console.log("API response:", data);
 
       if (!res.ok || !data.success) {

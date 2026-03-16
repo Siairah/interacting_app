@@ -30,11 +30,12 @@ export default function WarningsBanner({ circleId, userId }: WarningsBannerProps
     if (!userId || !circleId) return;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/notifications/warnings/${circleId}?user_id=${userId}`);
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/notifications/warnings/${circleId}?user_id=${userId}`);
       
       if (response.ok) {
-        const data = await response.json();
+        const { safeJson } = await import('@/utils/apiUtils');
+        const data = await safeJson<any>(response);
         if (data.success) {
           setWarnings(data.warnings || []);
         }
@@ -52,9 +53,8 @@ export default function WarningsBanner({ circleId, userId }: WarningsBannerProps
     try {
       const { getAuthToken } = await import('@/utils/socketAuth');
       const token = getAuthToken();
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      
-      const response = await fetch(`${apiUrl}/notifications/acknowledge-warning/${warningId}`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/notifications/acknowledge-warning/${warningId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +63,8 @@ export default function WarningsBanner({ circleId, userId }: WarningsBannerProps
         body: JSON.stringify({ user_id: userId })
       });
 
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       
       if (data.success) {
         showToast('Warning acknowledged', 'success');

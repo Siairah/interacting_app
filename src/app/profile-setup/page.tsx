@@ -184,7 +184,8 @@ export default function ProfileSetup() {
       form.append('gender', gender);
       form.append('bio', bio);
 
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/complete-registration`;
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = `${getApiUrl()}/complete-registration`;
       console.log('Completing registration (creating user + profile):', apiUrl);
       console.log('Form data being sent:', {
         hasFile: !!file,
@@ -199,7 +200,8 @@ export default function ProfileSetup() {
         body: form 
       });
       
-      const data = await res.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
       console.log('Profile setup response:', data);
       
       if (!res.ok || !data.success) {
@@ -210,7 +212,8 @@ export default function ProfileSetup() {
       
       // Automatically log the user in after successful registration
       try {
-        const loginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/login`, {
+        const { getApiUrl } = await import('@/utils/apiUtils');
+        const loginRes = await fetch(`${getApiUrl()}/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
@@ -219,7 +222,8 @@ export default function ProfileSetup() {
           }),
         });
 
-        const loginData = await loginRes.json();
+        const { safeJson } = await import('@/utils/apiUtils');
+        const loginData = await safeJson<any>(loginRes);
         console.log("Auto-login response:", loginData);
 
         if (loginData.success) {

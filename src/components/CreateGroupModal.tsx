@@ -71,14 +71,15 @@ export default function CreateGroupModal({
   const loadAdminCircles = async () => {
     setLoadingCircles(true);
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const { getApiUrl } = await import('@/utils/apiUtils');
       const { getAuthToken } = await import('@/utils/socketAuth');
       const token = getAuthToken();
       
-      const response = await fetch(`${API_URL}/circles/list?user_id=${userId}`, {
+      const response = await fetch(`${getApiUrl()}/circles/list?user_id=${userId}`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       
       if (data.success) {
         const adminCircles = (data.circles || []).filter((c: Circle) => c.is_admin);

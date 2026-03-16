@@ -51,8 +51,8 @@ export default function GroupMenu({
     const checkCircleAdmin = async () => {
       if (currentRoom.circle?.id && userId) {
         try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-          const res = await fetch(`${API_URL}/circle-details/${currentRoom.circle.id}?user_id=${userId}`);
+          const { getApiUrl } = await import('@/utils/apiUtils');
+          const res = await fetch(`${getApiUrl()}/circle-details/${currentRoom.circle.id}?user_id=${userId}`);
           
           if (!res.ok) {
             setIsCircleAdminState(false);
@@ -65,7 +65,8 @@ export default function GroupMenu({
             return;
           }
           
-          const data = await res.json();
+          const { safeJson } = await import('@/utils/apiUtils');
+          const data = await safeJson<any>(res);
           if (data.success && data.circle) {
             setIsCircleAdminState(data.circle.is_admin || false);
           } else {

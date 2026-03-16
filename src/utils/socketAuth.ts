@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import { getBackendUrl } from './apiUtils';
 
 let socketInstance: Socket | null = null;
 let currentTabId: string | null = null;
@@ -20,7 +21,7 @@ export function initSocketAuth(): Socket {
     return socketInstance;
   }
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const apiUrl = getBackendUrl();
   currentTabId = generateTabId();
 
   socketInstance = io(apiUrl, {

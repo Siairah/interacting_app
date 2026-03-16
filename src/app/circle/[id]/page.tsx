@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Navigation from "@/components/Navigation";
+import PostCard from "@/components/PostCard";
+import ReportPostModal from "@/components/ReportPostModal";
+import ViewPostModal from "@/components/ViewPostModal";
+import WarningsBanner from "@/components/WarningsBanner";
+import { Post } from "@/components/types";
 import styles from "./circle.module.css";
 
 interface User {
@@ -20,7 +26,8 @@ interface MediaFile {
   type: string;
 }
 
-interface Post {
+// Local post type from backend (before conversion)
+interface BackendPost {
   id: string;
   content: string;
   created_at: string;
@@ -44,12 +51,13 @@ interface Circle {
   is_restricted: boolean;
   is_banned: boolean;
   restricted_until?: string;
-  created_by: User;
-  members: User[];
-  posts: Post[];
+  created_by?: User;
+  members?: User[];
+  posts?: BackendPost[];
   pending_posts_count?: number;
   reported_posts_count?: number;
   flagged_posts_count?: number;
+  pending_members_count?: number;
   pending_users_count?: number;
   total_pending?: number;
 }
@@ -67,68 +75,148 @@ export default function CircleDetailPage() {
   const [postMedia, setPostMedia] = useState<File[]>([]);
   const [creating, setCreating] = useState(false);
   const [showPostMenu, setShowPostMenu] = useState<string | null>(null);
-  const [showAdminDropdown, setShowAdminDropdown] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showViewPostModal, setShowViewPostModal] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [hiddenPosts, setHiddenPosts] = useState<Set<string>>(new Set());
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [editMedia, setEditMedia] = useState<File[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Hide-on-scroll navbar state
+  const [isNavHidden, setIsNavHidden] = useState(false);
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const lastScrollTopRef = useRef<number>(0);
+  const rafIdRef = useRef<number | null>(null);
+  const lastToggleTsRef = useRef<number>(0);
 
   useEffect(() => {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      const userData = JSON.parse(userStr);
-      console.log("👤 Circle page - User data:", userData);
-      console.log("🖼️ Circle page - Profile pic:", userData.profilePic);
+    const loadUser = async () => {
+      // Use Socket.IO first, then fallback
+      const { ensureAuth } = await import('@/utils/socketAuth');
+      const { token, userId, userData } = await ensureAuth();
       
-      // Ensure correct data structure
-      const userWithProfile = {
-        ...userData,
-        profilePic: userData.profilePic || userData.profile_pic || "/images/default_profile.png",
-        fullName: userData.fullName || userData.full_name || "User"
-      };
+      if (!token || !userId) {
+        router.replace('/');
+        return;
+      }
       
-      console.log("✅ Circle page - Final user:", userWithProfile);
-      setCurrentUser(userWithProfile);
-    }
-    fetchCircleDetails();
-  }, [id]);
+      // Use user data (from Socket.IO or fallback)
+      if (userData) {
+        const userWithProfile = {
+          ...userData,
+          profilePic: userData.profilePic || userData.profile_pic || "/images/default_profile.png",
+          fullName: userData.fullName || userData.full_name || "User"
+        };
+        setCurrentUser(userWithProfile);
+      } else {
+        router.replace('/');
+        return;
+      }
+      
+      fetchCircleDetails();
+    };
+    
+    loadUser();
+  }, [id, router]);
+
+  // Hide navbar on scroll down (after threshold), show on scroll up (small delta), with debounce
+  useEffect(() => {
+    const HIDE_THRESHOLD = 64;
+    const SHOW_DELTA = 3;
+    const MIN_TOGGLE_INTERVAL = 180;
+    const SCROLL_TO_TOP_THRESHOLD = 300;
+
+    const onScroll = () => {
+      if (rafIdRef.current) return;
+      rafIdRef.current = requestAnimationFrame(() => {
+        const now = performance.now();
+        if (now - lastToggleTsRef.current < MIN_TOGGLE_INTERVAL) {
+          rafIdRef.current = null;
+          return;
+        }
+
+        const current = window.scrollY || document.documentElement.scrollTop;
+        const last = lastScrollTopRef.current;
+
+        setShowScrollToTop(current > SCROLL_TO_TOP_THRESHOLD);
+
+        if (current <= 0) {
+          if (isNavHidden) {
+            setIsNavHidden(false);
+            lastToggleTsRef.current = now;
+          }
+        } else if (current > last + SHOW_DELTA && current > HIDE_THRESHOLD) {
+          if (!isNavHidden) {
+            setIsNavHidden(true);
+            lastToggleTsRef.current = now;
+          }
+        } else if (current < last - SHOW_DELTA) {
+          if (isNavHidden) {
+            setIsNavHidden(false);
+            lastToggleTsRef.current = now;
+          }
+        }
+
+        lastScrollTopRef.current = current;
+        rafIdRef.current = null;
+      });
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    };
+  }, [isNavHidden]);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as HTMLElement;
-      if (showAdminDropdown && !target.closest('[class*="circleActions"]')) {
-        setShowAdminDropdown(false);
-      }
       if (showPostMenu && !target.closest('[class*="postOptionsDropdown"]')) {
         setShowPostMenu(null);
       }
-      if (showUserMenu && !target.closest('[class*="userMenu"]')) {
-        setShowUserMenu(false);
-      }
     }
 
-    if (showAdminDropdown || showPostMenu || showUserMenu) {
+    if (showPostMenu) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [showAdminDropdown, showPostMenu, showUserMenu]);
+  }, [showPostMenu]);
 
   const fetchCircleDetails = async () => {
     try {
       console.log("🔍 Fetching circle details for ID:", id);
-      const userStr = localStorage.getItem("user");
-      let user_id = null;
-      if (userStr) {
-        const userData = JSON.parse(userStr);
-        user_id = userData.id || userData._id;
-        console.log("👤 User ID:", user_id);
-      }
       
-      const url = `http://localhost:5000/circle-details/${id}?user_id=${user_id || ''}`;
+      // Use Socket.IO for getting user ID and token
+      const { getUserId, getAuthToken } = await import('@/utils/socketAuth');
+      const user_id = getUserId();
+      const token = getAuthToken();
+      
+      console.log("👤 User ID:", user_id);
+      
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = getApiUrl();
+      const url = `${apiUrl}/circle-details/${id}?user_id=${user_id || ''}`;
       console.log("🌐 API URL:", url);
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       console.log("📡 Response status:", response.status);
       
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       console.log("📦 Response data:", data);
 
       if (data.success) {
@@ -150,16 +238,26 @@ export default function CircleDetailPage() {
     if (!currentUser) return;
 
     try {
-      const response = await fetch('http://localhost:5000/circles/join', {
+      // Use Socket.IO token for API call
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/circles/join`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           user_id: currentUser.id,
           circle_id: id
         })
       });
 
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       if (data.success) {
         fetchCircleDetails(); // Refresh circle data
       }
@@ -172,16 +270,26 @@ export default function CircleDetailPage() {
     if (!currentUser) return;
 
     try {
-      const response = await fetch('http://localhost:5000/circles/leave', {
+      // Use Socket.IO token for API call
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/circles/leave`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           user_id: currentUser.id,
           circle_id: id
         })
       });
 
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       if (data.success) {
         fetchCircleDetails(); // Refresh circle data
       }
@@ -194,20 +302,29 @@ export default function CircleDetailPage() {
     if (!currentUser) return;
 
     try {
-      const response = await fetch('http://localhost:5000/toggle-like', {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = getApiUrl();
+      // Use Socket.IO token for API call
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
+      const response = await fetch(`${apiUrl}/toggle-like/${postId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
-          post_id: postId,
           user_id: currentUser.id
         })
       });
 
-      const data = await response.json();
-      if (data.success && circle) {
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
+      if (data.success && circle && circle.posts) {
         setCircle({
           ...circle,
-          posts: circle.posts.map(post =>
+          posts: circle.posts.map((post: BackendPost) =>
             post.id === postId
               ? { ...post, user_liked: data.liked, like_count: data.like_count }
               : post
@@ -219,12 +336,56 @@ export default function CircleDetailPage() {
     }
   };
 
+  const handleCommentAdded = () => {
+    fetchCircleDetails();
+  };
+
+  // Convert circle post to PostCard format
+  const convertToPostCardFormat = (post: BackendPost): Post => {
+    if (!circle) {
+      throw new Error('Circle is not loaded');
+    }
+    return {
+      id: post.id,
+      content: post.content,
+      created_at: post.created_at,
+      user: {
+        id: post.user.id,
+        email: post.user.email || '',
+        full_name: post.user.fullName || post.user.full_name || 'User',
+        profile_pic: post.user.profilePic || post.user.profile_pic || '/images/default_profile.png'
+      },
+      circle: {
+        id: circle.id,
+        name: circle.name,
+        cover_image: circle.cover_image
+      },
+      media_files: post.media_files || [],
+      like_count: post.like_count || 0,
+      user_liked: post.user_liked || false,
+      comment_count: post.comment_count || 0,
+      recent_likers: [],
+      comments: []
+    };
+  };
+
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser || !postContent.trim()) return;
+    if (!currentUser) return;
+    
+    // Allow posts with just media or just content
+    if (!postContent.trim() && (!postMedia || postMedia.length === 0)) {
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Please add content or media to your post', 'error');
+      return;
+    }
 
     setCreating(true);
     try {
+      // Use Socket.IO token for API call
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
       const formData = new FormData();
       formData.append('content', postContent.trim());
       formData.append('user_id', currentUser.id);
@@ -237,26 +398,149 @@ export default function CircleDetailPage() {
         });
       }
 
-      const response = await fetch('http://localhost:5000/create-post', {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/create-post`, {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         body: formData
       });
 
-      const data = await response.json();
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text.substring(0, 200));
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(`Server error: ${response.status} ${response.statusText}`, 'error');
+        return;
+      }
+
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       if (data.success) {
-        alert(data.message); // Show approval status message
+        const { showToast } = await import('@/components/ToastContainer');
+        
+        // Check if post was flagged by content moderation
+        if (data.flagged) {
+          showToast('Post flagged. Awaiting admin review.', 'warning', 5000);
+        } else if (!data.is_approved) {
+          showToast('Post submitted for review. It will be visible after admin approval.', 'warning');
+        } else {
+          showToast('Post created successfully', 'success');
+        }
+        
         setPostContent('');
         setPostMedia([]);
         setShowCreatePost(false);
         fetchCircleDetails(); // Refresh posts
       } else {
-        alert(data.message || 'Failed to create post');
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to create post'), 'error');
       }
     } catch (error) {
       console.error("Error creating post:", error);
-      alert('Failed to create post');
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to create post: ' + sanitizeErrorMessage(error), 'error');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleEditPost = (post: Post) => {
+    setEditingPost(post);
+    setEditContent(post.content);
+    setEditMedia([]);
+    setShowPostMenu(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPost || !currentUser || !editContent.trim()) return;
+
+    setIsEditing(true);
+    try {
+      // Use Socket.IO token for API call
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = getApiUrl();
+      const formData = new FormData();
+      formData.append('user_id', currentUser.id);
+      formData.append('content', editContent);
+      
+      // Add media files if any
+      editMedia.forEach((file) => {
+        formData.append('media', file);
+      });
+
+      const response = await fetch(`${apiUrl}/edit-post/${editingPost.id}`, {
+        method: 'PUT',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        body: formData
+      });
+
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
+      if (data.success) {
+        setEditingPost(null);
+        setEditContent("");
+        setEditMedia([]);
+        fetchCircleDetails(); // Refresh posts
+      } else {
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to edit post'), 'error');
+      }
+    } catch (error) {
+      console.error("Error editing post:", error);
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to edit post: ' + sanitizeErrorMessage(error), 'error');
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!currentUser) return;
+    const { confirmDialog } = await import('@/utils/confirmDialog');
+    const confirmed = await confirmDialog('Are you sure you want to delete this post?', 'Delete', 'Cancel', 'danger');
+    if (!confirmed) return;
+
+    try {
+      // Use Socket.IO token for API call
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/delete-post/${postId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ user_id: currentUser.id })
+      });
+
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
+      if (data.success) {
+        setShowPostMenu(null);
+        fetchCircleDetails(); // Refresh posts
+      } else {
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to delete post'), 'error');
+      }
+    } catch (error) {
+      console.error("Error deleting post:", error);
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to delete post: ' + sanitizeErrorMessage(error), 'error');
     }
   };
 
@@ -294,368 +578,220 @@ export default function CircleDetailPage() {
   }
 
   return (
-    <div className={styles.container}>
-      {/* Top Navigation */}
-      <nav className={styles.topNav}>
-        <div className={styles.navContainer}>
-          <Link href="/dashboard" className={styles.navBrand}>
-            <img src="/images/logo.png" alt="Chautari" className={styles.logoImg} />
-          </Link>
-          
-          <div className={styles.navCenter}>
-            <div className={styles.searchBar}>
-              <i className="fas fa-search"></i>
-              <input type="text" placeholder="Search circles..." />
-            </div>
-          </div>
+    <div className={styles.pageWrapper}>
+      {/* Navigation Component */}
+      <Navigation isHidden={isNavHidden} />
 
-          <div className={styles.navRight}>
-            <Link href="/dashboard" className={styles.navIconBtn} title="Home">
-              <i className="fas fa-home"></i>
-            </Link>
-            
-            <div className={styles.userMenu}>
-              <button 
-                className={styles.userMenuBtn}
-                onClick={() => setShowUserMenu(!showUserMenu)}
-              >
-                {currentUser?.profilePic && currentUser.profilePic !== "/images/default_profile.png" ? (
-                  <img
-                    src={currentUser.profilePic}
-                    alt="Profile"
-                    className={styles.userAvatar}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      console.log("❌ Failed to load profile pic:", currentUser?.profilePic);
-                      target.src = "/images/default_profile.png";
-                    }}
-                  />
-                ) : (
-                  <div className={styles.userAvatarPlaceholder}>
-                    {currentUser?.fullName ? currentUser.fullName.charAt(0).toUpperCase() : "U"}
-                  </div>
-                )}
-                <span className={styles.userName}>{currentUser?.fullName || "User"}</span>
-                <i className="fas fa-chevron-down"></i>
-              </button>
-              {showUserMenu && (
-                <div className={styles.dropdownMenu}>
-                  <Link href="/profile" className={styles.dropdownItem}>
-                    <i className="fas fa-user"></i> My Profile
-                  </Link>
-                  <Link href="/dashboard" className={styles.dropdownItem}>
-                    <i className="fas fa-home"></i> Dashboard
-                  </Link>
-                  <Link href="/circles" className={styles.dropdownItem}>
-                    <i className="fas fa-circle"></i> Circles
-                  </Link>
-                  <hr className={styles.dropdownDivider} />
-                  <button onClick={() => {
-                    localStorage.removeItem("user");
-                    localStorage.removeItem("auth_token");
-                    router.replace("/");
-                  }} className={`${styles.dropdownItem} ${styles.logoutBtn}`}>
-                    <i className="fas fa-sign-out-alt"></i> Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
+      {/* Scroll to Top Button */}
+      {showScrollToTop && (
+        <button 
+          onClick={scrollToTop}
+          className={styles.scrollToTopBtn}
+          title="Scroll to top"
+        >
+          <i className="fas fa-chevron-up"></i>
+        </button>
+      )}
+
+      {/* Main Content Container */}
+      <div className={styles.container}>
 
       {/* Circle Hero Section */}
-      <div className={styles.circleHero}>
-        <div 
-          className={styles.circleCover}
-          style={{ backgroundImage: `url(${circle.cover_image || '/images/banner.png'})` }}
-        >
-          <div className={styles.coverOverlay}>
-            <div className={styles.circleHeaderContent}>
-              <div className={styles.circleTitleContainer}>
-                <h1 className={styles.circleTitle}>{circle.name}</h1>
-                <Link href="/circles" className={styles.backToCirclesBtn}>
-                  <i className="fas fa-arrow-left"></i> Back to Circles
-                </Link>
-              </div>
-              <p className={styles.circleSubtitle}>
-                <i className="fas fa-users"></i>
-                {circle.member_count} members
-              </p>
-              <span className={`${styles.visibilityBadge} ${styles[circle.visibility]}`}>
-                <i className={`fas fa-${circle.visibility === 'public' ? 'globe' : 'lock'}`}></i>
-                {circle.visibility === 'public' ? 'Public' : 'Private'}
-              </span>
-            </div>
-          </div>
-          
-          {/* Admin Actions Dropdown */}
-          {circle.is_admin && (
-            <div className={styles.circleActions}>
-              <button 
-                className={styles.adminDropdownBtn}
-                onClick={() => setShowAdminDropdown(!showAdminDropdown)}
-              >
-                <i className="fas fa-ellipsis-h"></i>
-                {circle.total_pending && circle.total_pending > 0 && (
-                  <span className={styles.notificationBadge}></span>
-                )}
-              </button>
-              
-              {showAdminDropdown && (
-                <div className={styles.adminDropdownMenu}>
-                  <Link href={`/circle/${id}/manage`} className={styles.dropdownItem}>
-                    <i className="fas fa-users-cog"></i> Manage Circle
-                  </Link>
-                  <div className={styles.dropdownDivider}></div>
-                  <Link href={`/circle/${id}/pending`} className={styles.dropdownItem}>
-                    <span className={styles.dropdownLabel}>
-                      <i className="fas fa-hourglass-half"></i> Pending Posts
-                    </span>
-                    {circle.pending_posts_count && circle.pending_posts_count > 0 && (
-                      <span className={styles.badge}>{circle.pending_posts_count}</span>
-                    )}
-                  </Link>
-                  <Link href={`/circle/${id}/reported`} className={styles.dropdownItem}>
-                    <span className={styles.dropdownLabel}>
-                      <i className="fas fa-flag"></i> Reported Posts
-                    </span>
-                    {circle.reported_posts_count && circle.reported_posts_count > 0 && (
-                      <span className={styles.badge + ' ' + styles.warning}>{circle.reported_posts_count}</span>
-                    )}
-                  </Link>
-                  <Link href={`/circle/${id}/flagged`} className={styles.dropdownItem}>
-                    <span className={styles.dropdownLabel}>
-                      <i className="fas fa-exclamation-triangle"></i> Flagged Content
-                    </span>
-                    {circle.flagged_posts_count && circle.flagged_posts_count > 0 && (
-                      <span className={styles.badge + ' ' + styles.danger}>{circle.flagged_posts_count}</span>
-                    )}
-                  </Link>
-                  <Link href={`/circle/${id}/pending-members`} className={styles.dropdownItem}>
-                    <span className={styles.dropdownLabel}>
-                      <i className="fas fa-user-clock"></i> Pending Users
-                    </span>
-                    {circle.pending_users_count && circle.pending_users_count > 0 && (
-                      <span className={styles.badge + ' ' + styles.primary}>{circle.pending_users_count}</span>
-                    )}
-                  </Link>
-                  <div className={styles.dropdownDivider}></div>
-                  <Link href={`/circle/${id}/members`} className={styles.dropdownItem}>
-                    <i className="fas fa-user-friends"></i> Manage Members
+      {circle && (
+        <div className={styles.circleHero}>
+          <div 
+            className={styles.circleCover}
+            style={{ backgroundImage: `url(${circle.cover_image || '/images/banner.png'})` }}
+          >
+            <div className={styles.coverOverlay}>
+              <div className={styles.circleHeaderContent}>
+                <div className={styles.circleTitleContainer}>
+                  <h1 className={styles.circleTitle}>{circle.name}</h1>
+                  <Link href="/circles" className={styles.backToCirclesBtn}>
+                    <i className="fas fa-arrow-left"></i> Back to Circles
                   </Link>
                 </div>
-              )}
+                <p className={styles.circleSubtitle}>
+                  <i className="fas fa-users"></i>
+                  {circle.member_count} members
+                </p>
+              </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Content Grid - Django Two Column Layout */}
-      <div className={styles.circleInfoSection}>
-        {/* Left Sidebar - Circle Info (Django Structure) */}
-        <div className={styles.circleSidebar}>
-          <div className={styles.circleDescription}>
-            <p>{circle.description}</p>
-          </div>
-
-          {circle.rules && (
-            <div className={styles.circleRules}>
-              <strong>Community Guidelines</strong>
-              <ul>
-                {circle.rules.split('\n').map((line, index) => (
-                  line.trim() && (
-                    <li key={index}>{line}</li>
-                  )
-                ))}
-              </ul>
+      {circle && (
+        <div className={styles.circleInfoSection}>
+          {/* Left Sidebar - Circle Info (Django Structure) */}
+          <div className={styles.circleSidebar}>
+            <div className={styles.circleDescription}>
+              <p>{circle.description}</p>
             </div>
-          )}
 
-          <div className={styles.actionButtons}>
-            {circle.is_member ? (
-              <button 
-                onClick={handleLeaveCircle}
-                className={styles.actionBtn + ' ' + styles.btnLeave}
-              >
-                <i className="fas fa-sign-out-alt"></i> Leave Circle
-              </button>
-            ) : (
-              <button 
-                onClick={handleJoinCircle}
-                className={styles.actionBtn + ' ' + styles.btnJoin}
-              >
-                <i className="fas fa-sign-in-alt"></i> Join Circle
-              </button>
+            {circle.rules && (
+              <div className={styles.circleRules}>
+                <strong>Community Guidelines</strong>
+                <ul>
+                  {circle.rules.split('\n').map((line, index) => (
+                    line.trim() && (
+                      <li key={index}>{line}</li>
+                    )
+                  ))}
+                </ul>
+              </div>
             )}
 
-            {circle.is_admin && (
-              <Link href={`/circle/${id}/manage`} className={styles.actionBtn + ' ' + styles.btnManage}>
-                <i className="fas fa-cog"></i> Manage Circle
+            <div className={styles.actionButtons}>
+              {circle.is_member ? (
+                <button 
+                  onClick={handleLeaveCircle}
+                  className={styles.actionBtn + ' ' + styles.btnLeave}
+                >
+                  <i className="fas fa-sign-out-alt"></i> Leave Circle
+                </button>
+              ) : (
+                <button 
+                  onClick={handleJoinCircle}
+                  className={styles.actionBtn + ' ' + styles.btnJoin}
+                >
+                  <i className="fas fa-sign-in-alt"></i> Join Circle
+                </button>
+              )}
+
+              {/* Admin Only: Manage Circle Button */}
+              {circle.is_admin && (
+                <Link href={`/circle/${id}/manage`} className={styles.actionBtn + ' ' + styles.btnManage}>
+                  <i className="fas fa-cog"></i> Manage Circle
+                </Link>
+              )}
+
+              <Link href={`/circle/${id}/moderation`} className={styles.moderationBtn}>
+                <i className="fas fa-shield-alt"></i> View Moderation History
               </Link>
-            )}
-            
-            {/* Moderation History Button */}
-            <Link href={`/circle/${id}/moderation`} className={styles.moderationBtn}>
-              <i className="fas fa-shield-alt"></i> View Moderation History
-            </Link>
-          </div>
-        </div>
-
-        {/* Right Main Content - Posts */}
-        <div className={styles.circleMainContent}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Community Posts</h2>
-            {(circle.is_member || circle.visibility !== 'private') && !circle.is_restricted && !circle.is_banned && (
-              <button 
-                onClick={() => setShowCreatePost(true)} 
-                className={styles.createPostBtn}
-              >
-                <i className="fas fa-plus"></i> Create Post
-              </button>
-            )}
+            </div>
           </div>
 
-          <div className={styles.postsGrid}>
-            {/* Django Logic: Handle restricted/banned users */}
-            {circle.is_restricted ? (
-              <div className={styles.joinPrompt}>
-                <div className={styles.joinPromptIcon}>
-                  <i className="fas fa-user-lock"></i>
+          {/* Right Main Content - Posts */}
+          <div className={`${styles.circleMainContent} ${isNavHidden ? styles.compactTop : ''}`}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>Community Posts</h2>
+              {(circle.is_member || circle.visibility !== 'private') && !circle.is_restricted && !circle.is_banned && (
+                <button 
+                  onClick={() => setShowCreatePost(true)} 
+                  className={styles.createPostBtn}
+                >
+                  <i className="fas fa-plus"></i> Create Post
+                </button>
+              )}
+            </div>
+
+            {/* Warnings Banner */}
+            {currentUser && circle.is_member && (
+              <WarningsBanner circleId={id} userId={currentUser.id} />
+            )}
+
+            <div className={styles.postsGrid}>
+              {/* Django Logic: Handle restricted/banned users */}
+              {circle.is_restricted ? (
+                <div className={styles.joinPrompt}>
+                  <div className={styles.joinPromptIcon}>
+                    <i className="fas fa-user-lock"></i>
+                  </div>
+                  <h3 className={styles.joinPromptTitle}>Access Restricted</h3>
+                  <p className={styles.joinPromptText}>
+                    You are restricted from this circle until <strong>{circle.restricted_until}</strong>.
+                  </p>
                 </div>
-                <h3 className={styles.joinPromptTitle}>Access Restricted</h3>
-                <p className={styles.joinPromptText}>
-                  You are restricted from this circle until <strong>{circle.restricted_until}</strong>.
-                </p>
-              </div>
-            ) : circle.is_banned ? (
-              <div className={styles.joinPrompt}>
-                <div className={styles.joinPromptIcon}>
-                  <i className="fas fa-ban"></i>
+              ) : circle.is_banned ? (
+                <div className={styles.joinPrompt}>
+                  <div className={styles.joinPromptIcon}>
+                    <i className="fas fa-ban"></i>
+                  </div>
+                  <h3 className={styles.joinPromptTitle}>Banned</h3>
+                  <p className={styles.joinPromptText}>
+                    You have been banned from this circle and cannot access its contents.
+                  </p>
                 </div>
-                <h3 className={styles.joinPromptTitle}>Banned</h3>
-                <p className={styles.joinPromptText}>
-                  You have been banned from this circle and cannot access its contents.
-                </p>
-              </div>
-            ) : (circle.is_member || circle.visibility !== 'private') && circle.posts && circle.posts.length > 0 ? (
-              circle.posts.map(post => (
-                <div key={post.id} className={styles.postCard}>
-                  <div className={styles.postHeader}>
-                    <div className={styles.postUser}>
-                      <button 
-                        type="button"
-                        className={styles.postUserAvatarButton}
-                        onClick={() => router.push(`/profile/${post.user.id}`)}
-                      >
-                        <img 
-                          src={(post.user.profilePic || post.user.profile_pic) || '/images/default_profile.png'} 
-                          alt={(post.user.fullName || post.user.full_name) || 'User'}
-                          className={styles.postUserAvatar}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/images/default_profile.png';
-                          }}
-                        />
-                      </button>
-                      <div className={styles.postUserInfo}>
+              ) : (circle.is_member || circle.visibility !== 'private') && circle.posts && circle.posts.length > 0 ? (
+                circle.posts.map((post: BackendPost) => {
+                  const postCardData = convertToPostCardFormat(post);
+                  return (
+                  <PostCard
+                    key={post.id}
+                    post={postCardData}
+                    userId={currentUser?.id}
+                    showComments={false}
+                    onLike={handleLike}
+                    onCommentAdded={handleCommentAdded}
+                    customOptionsMenu={
+                      <div className={styles.postOptionsDropdown}>
                         <button 
-                          type="button"
-                          className={styles.postUserNameButton}
-                          onClick={() => router.push(`/profile/${post.user.id}`)}
+                          className={styles.postOptions}
+                          onClick={() => setShowPostMenu(showPostMenu === post.id ? null : post.id)}
                         >
-                          <span className={styles.postUserName}>{post.user.fullName || post.user.full_name || 'User'}</span>
+                          <i className="fas fa-ellipsis-v"></i>
                         </button>
-                        <span className={styles.postTime}>{getTimeAgo(post.created_at)} ago</span>
-                      </div>
-                    </div>
-                    <div className={styles.postOptionsDropdown}>
-                      <button 
-                        className={styles.postOptions}
-                        onClick={() => setShowPostMenu(showPostMenu === post.id ? null : post.id)}
-                      >
-                        <i className="fas fa-ellipsis-v"></i>
-                      </button>
-                      {showPostMenu === post.id && (
-                        <div className={styles.postDropdownMenu}>
-                          <button 
-                            className={styles.dropdownItem}
-                            onClick={() => {
-                              setShowPostMenu(null);
-                              router.push(`/post/${post.id}`);
-                            }}
-                          >
-                            <i className="fas fa-eye"></i> View Post
-                          </button>
-                          {currentUser?.id === post.user.id && (
-                            <>
-                              <button className={styles.dropdownItem}>
-                                <i className="fas fa-edit"></i> Edit Post
-                              </button>
-                              <button className={`${styles.dropdownItem} ${styles.textDanger}`}>
-                                <i className="fas fa-trash"></i> Delete Post
-                              </button>
-                            </>
-                          )}
-                          {currentUser?.id !== post.user.id && (
-                            <button className={styles.dropdownItem}>
-                              <i className="fas fa-flag"></i> Report
+                        {showPostMenu === post.id && (
+                          <div className={styles.postDropdownMenu}>
+                            <button 
+                              className={styles.dropdownItem}
+                              onClick={() => {
+                                setShowPostMenu(null);
+                                setSelectedPost(postCardData);
+                                setShowViewPostModal(true);
+                              }}
+                            >
+                              <i className="fas fa-eye"></i> View Post
                             </button>
-                          )}
-                          <button className={styles.dropdownItem}>
-                            <i className="fas fa-eye-slash"></i> Hide Post
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className={styles.postContent}>
-                    <p>{post.content}</p>
-                  </div>
-
-                  {post.media_files.length > 0 && (
-                    <div className={styles.postMedia}>
-                      {post.media_files.length === 1 ? (
-                        // Single media
-                        post.media_files[0].type === 'video' ? (
-                          <video controls className={styles.singleMedia}>
-                            <source src={post.media_files[0].file} type="video/mp4" />
-                          </video>
-                        ) : (
-                          <img src={post.media_files[0].file} alt="Post media" className={styles.singleMedia} />
-                        )
-                      ) : (
-                        // Multiple media - grid layout
-                        <div className={styles.mediaGrid}>
-                          {post.media_files.map((media, index) => (
-                            <div key={index} className={styles.mediaItem}>
-                              {media.type === 'video' ? (
-                                <video controls className={styles.mediaFile}>
-                                  <source src={media.file} type="video/mp4" />
-                                </video>
-                              ) : (
-                                <img src={media.file} alt={`Post media ${index + 1}`} className={styles.mediaFile} />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className={styles.postActions}>
-                    <button onClick={() => handleLike(post.id)} className={styles.likeBtn}>
-                      <i className={post.user_liked ? "fas fa-heart" : "far fa-heart"} style={{ color: post.user_liked ? '#e3342f' : '#6c757d' }}></i>
-                      <span className={styles.likeCount}>{post.like_count}</span>
-                    </button>
-                    <Link href={`/post/${post.id}`} className={styles.commentBtn}>
-                      <i className="far fa-comment"></i>
-                      <span className={styles.commentCount}>{post.comment_count}</span>
-                    </Link>
-                  </div>
-                </div>
-              ))
+                            {currentUser?.id === post.user.id && (
+                              <>
+                                <button 
+                                  className={styles.dropdownItem}
+                                  onClick={() => handleEditPost(postCardData)}
+                                >
+                                  <i className="fas fa-edit"></i> Edit Post
+                                </button>
+                                <button 
+                                  className={`${styles.dropdownItem} ${styles.textDanger}`}
+                                  onClick={() => {
+                                    setShowPostMenu(null);
+                                    handleDeletePost(post.id);
+                                  }}
+                                >
+                                  <i className="fas fa-trash"></i> Delete Post
+                                </button>
+                              </>
+                            )}
+                            {currentUser?.id !== post.user.id && (
+                              <button
+                                className={styles.dropdownItem}
+                                onClick={() => {
+                                  setShowPostMenu(null);
+                                  setSelectedPost(postCardData);
+                                  setShowReportModal(true);
+                                }}
+                              >
+                                <i className="fas fa-flag"></i> Report
+                              </button>
+                            )}
+                            <button
+                              className={styles.dropdownItem}
+                              onClick={() => {
+                                setShowPostMenu(null);
+                                setHiddenPosts(prev => new Set(prev).add(post.id));
+                              }}
+                            >
+                              <i className="fas fa-eye-slash"></i> Hide Post
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    }
+                  />
+                );
+              })
             ) : (circle.is_member || circle.visibility !== 'private') ? (
               <div className={styles.emptyState}>
                 <i className="fas fa-comment-slash"></i>
@@ -683,7 +819,8 @@ export default function CircleDetailPage() {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Create Post Modal */}
       {showCreatePost && (
@@ -697,9 +834,8 @@ export default function CircleDetailPage() {
               <textarea
                 value={postContent}
                 onChange={(e) => setPostContent(e.target.value)}
-                placeholder="What&apos;s on your mind?"
+                placeholder="What&apos;s on your mind? (Optional)"
                 className={styles.postTextarea}
-                required
               />
               
               {/* Media Preview */}
@@ -710,8 +846,9 @@ export default function CircleDetailPage() {
                       {file.type.startsWith('video/') ? (
                         <video 
                           src={URL.createObjectURL(file)} 
-                          className={styles.previewImage}
                           controls
+                          className={styles.previewImage}
+                          style={{ maxHeight: '200px', width: '100%', objectFit: 'cover' }}
                         />
                       ) : (
                         <img 
@@ -744,12 +881,18 @@ export default function CircleDetailPage() {
                 multiple
                 onChange={(e) => {
                   if (e.target.files) {
-                    setPostMedia([...postMedia, ...Array.from(e.target.files)]);
+                    const mediaFiles = Array.from(e.target.files).filter(file => 
+                      file.type.startsWith('image/') || file.type.startsWith('video/')
+                    );
+                    setPostMedia([...postMedia, ...mediaFiles]);
                   }
                 }}
               />
               
               <div className={styles.modalFooter}>
+                <button type="button" onClick={() => setShowCreatePost(false)} className={styles.btnCancel}>
+                  Cancel
+                </button>
                 <button type="submit" className={styles.btnPost} disabled={creating}>
                   {creating ? 'Posting...' : 'Post'}
                 </button>
@@ -758,6 +901,143 @@ export default function CircleDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Edit Post Modal */}
+      {editingPost && (
+        <div className={styles.modalOverlay} onClick={() => setEditingPost(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Edit Post</h3>
+              <button onClick={() => setEditingPost(null)} className={styles.btnClose}>×</button>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); handleSaveEdit(); }} className={styles.modalBody}>
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                placeholder="What&apos;s on your mind?"
+                className={styles.postTextarea}
+                required
+              />
+              
+              {/* Existing Media Preview */}
+              {editingPost.media_files && editingPost.media_files.length > 0 && (
+                <div className={styles.mediaPreviewGrid}>
+                  {editingPost.media_files.map((media, index) => (
+                    <div key={`existing-${index}`} className={styles.mediaPreviewItem}>
+                      {media.type === 'video' ? (
+                        <div className={styles.videoPlaceholder}>
+                          <i className="fas fa-video"></i>
+                          <span>Video (not supported for editing)</span>
+                        </div>
+                      ) : (
+                        <img 
+                          src={media.file} 
+                          alt={`Media ${index + 1}`}
+                          className={styles.previewImage}
+                        />
+                      )}
+                      <span className={styles.existingMediaLabel}>Existing</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* New Media Preview */}
+              {editMedia.length > 0 && (
+                <div className={styles.mediaPreviewGrid}>
+                  {editMedia.map((file, index) => (
+                    <div key={`new-${index}`} className={styles.mediaPreviewItem}>
+                      {file.type.startsWith('video/') ? (
+                        <video 
+                          src={URL.createObjectURL(file)} 
+                          controls
+                          className={styles.previewImage}
+                          style={{ maxHeight: '200px', width: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <img 
+                          src={URL.createObjectURL(file)} 
+                          alt={`Preview ${index + 1}`}
+                          className={styles.previewImage}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        className={styles.removeMediaBtn}
+                        onClick={() => setEditMedia(editMedia.filter((_, i) => i !== index))}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <label htmlFor="editMediaInput" className={styles.mediaLabel}>
+                <i className="fas fa-camera"></i> Add Photos/Videos {editMedia.length > 0 && `(${editMedia.length})`}
+              </label>
+              
+              <input
+                type="file"
+                id="editMediaInput"
+                className={styles.hiddenInput}
+                accept="image/*,video/*"
+                multiple
+                onChange={(e) => {
+                  if (e.target.files) {
+                    const mediaFiles = Array.from(e.target.files).filter(file => 
+                      file.type.startsWith('image/') || file.type.startsWith('video/')
+                    );
+                    setEditMedia([...editMedia, ...mediaFiles]);
+                  }
+                }}
+              />
+              
+              <div className={styles.modalFooter}>
+                <button type="button" onClick={() => setEditingPost(null)} className={styles.btnCancel}>
+                  Cancel
+                </button>
+                <button type="submit" className={styles.btnPost} disabled={isEditing}>
+                  {isEditing ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showReportModal && selectedPost && (
+        <ReportPostModal
+          post={selectedPost}
+          userId={currentUser?.id || null}
+          isOpen={showReportModal}
+          onClose={() => {
+            setShowReportModal(false);
+            setSelectedPost(null);
+          }}
+          onReportSubmitted={() => {
+            fetchCircleDetails();
+          }}
+        />
+      )}
+
+      {showViewPostModal && selectedPost && (
+        <ViewPostModal
+          post={selectedPost}
+          userId={currentUser?.id || null}
+          isOpen={showViewPostModal}
+          onClose={() => {
+            setShowViewPostModal(false);
+            setSelectedPost(null);
+          }}
+          onLike={handleLike}
+          onCommentAdded={handleCommentAdded}
+          onPostDeleted={() => {
+            fetchCircleDetails();
+          }}
+        />
+      )}
+      </div>
     </div>
   );
 }

@@ -34,11 +34,12 @@ export default function ReportPostModal({
       
       setCheckingReport(true);
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiUrl}/posts/check-report?post_id=${post.id}&user_id=${userId}`);
+        const { getApiUrl } = await import('@/utils/apiUtils');
+        const response = await fetch(`${getApiUrl()}/posts/check-report?post_id=${post.id}&user_id=${userId}`);
         
         if (response.ok) {
-          const data = await response.json();
+          const { safeJson } = await import('@/utils/apiUtils');
+          const data = await safeJson<any>(response);
           if (data.hasReported) {
             setHasReported(true);
             const { showToast } = await import('@/components/ToastContainer');
@@ -83,9 +84,8 @@ export default function ReportPostModal({
       // Use Socket.IO token for API call
       const { getAuthToken } = await import('@/utils/socketAuth');
       const token = getAuthToken();
-      
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/posts/report`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/posts/report`, {
         method: 'POST',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         body: formData
@@ -115,7 +115,8 @@ export default function ReportPostModal({
         return;
       }
 
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       
       if (data.success) {
         const { showToast } = await import('@/components/ToastContainer');

@@ -59,9 +59,8 @@ export default function CommentsSection({
       // Use Socket.IO token for API call
       const { getAuthToken } = await import('@/utils/socketAuth');
       const token = getAuthToken();
-      
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/add-comment/${postId}`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/add-comment/${postId}`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -73,7 +72,8 @@ export default function CommentsSection({
         })
       });
 
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       if (data.status === 'success') {
         setNewComment('');
         // Focus back on input after successful comment

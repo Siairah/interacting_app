@@ -43,9 +43,8 @@ export default function PostCard({
         // Use Socket.IO token for API call
         const { getAuthToken } = await import('@/utils/socketAuth');
         const token = getAuthToken();
-        
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-        const response = await fetch(`${apiUrl}/toggle-like/${post.id}`, {
+        const { getApiUrl } = await import('@/utils/apiUtils');
+        const response = await fetch(`${getApiUrl()}/toggle-like/${post.id}`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
@@ -54,7 +53,8 @@ export default function PostCard({
           body: JSON.stringify({ user_id: userId }),
         });
 
-        const data = await response.json();
+        const { safeJson } = await import('@/utils/apiUtils');
+        const data = await safeJson<any>(response);
         if (data.success && onCommentAdded) {
           onCommentAdded();
         }

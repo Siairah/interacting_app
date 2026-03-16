@@ -158,8 +158,10 @@ export default function ProfilePage() {
             return;
           }
           
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/get-user-profile/by-id/${idFromPath}`);
-          const data = await res.json();
+          const { getApiUrl } = await import('@/utils/apiUtils');
+          const res = await fetch(`${getApiUrl()}/get-user-profile/by-id/${idFromPath}`);
+          const { safeJson } = await import('@/utils/apiUtils');
+          const data = await safeJson<any>(res);
           if (data.success && data.user) {
             setUser(data.user);
             setViewedUserId(idFromPath);
@@ -187,11 +189,13 @@ export default function ProfilePage() {
 
         // Fetch fresh user data from backend using Socket.IO token
         const authToken = getAuthToken();
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/get-user-profile`, {
+        const { getApiUrl } = await import('@/utils/apiUtils');
+        const res = await fetch(`${getApiUrl()}/get-user-profile`, {
           method: "GET",
           headers: { "Authorization": `Bearer ${authToken}` },
         });
-        const data = await res.json();
+        const { safeJson } = await import('@/utils/apiUtils');
+        const data = await safeJson<any>(res);
         if (data.success && data.user) {
           setUser(data.user);
           // Always set currentUserId when fetching own profile
@@ -284,12 +288,14 @@ export default function ProfilePage() {
       formData.append('gender', user?.gender || '');
       formData.append('profile_pic', file);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/profile-setup`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const res = await fetch(`${getApiUrl()}/profile-setup`, {
         method: 'POST',
         body: formData
       });
 
-      const data = await res.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
       
       if (data.success && data.profile) {
         const updatedUser = {
@@ -383,12 +389,14 @@ export default function ProfilePage() {
         console.log('ℹ️ No new profile picture, keeping existing:', user?.profilePic);
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/profile-setup`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const res = await fetch(`${getApiUrl()}/profile-setup`, {
         method: 'POST',
         body: formData
       });
 
-      const data = await res.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
       console.log('📥 Profile update response:', data);
       
       if (!res.ok || !data.success) {
@@ -434,8 +442,10 @@ export default function ProfilePage() {
     
     try {
       setLoadingPosts(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/user-posts/${user.id}`);
-      const data = await response.json();
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/user-posts/${user.id}`);
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       
       if (data.success) {
         setPosts(data.posts || []);
@@ -452,10 +462,12 @@ export default function ProfilePage() {
     
     try {
       setLoadingPosts(true);
+      const { getApiUrl } = await import('@/utils/apiUtils');
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/posts/shared-circle-posts?viewer_id=${currentUserId}&profile_user_id=${user.id}`
+        `${getApiUrl()}/posts/shared-circle-posts?viewer_id=${currentUserId}&profile_user_id=${user.id}`
       );
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       
       if (data.success) {
         setPosts(data.posts || []);
@@ -473,8 +485,10 @@ export default function ProfilePage() {
     
     try {
       setLoadingGallery(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/user-gallery/${user.id}`);
-      const data = await response.json();
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/user-gallery/${user.id}`);
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       
       if (data.success) {
         setGallery(data.gallery || []);

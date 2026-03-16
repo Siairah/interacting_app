@@ -100,7 +100,8 @@ export default function Signup() {
 
   const sendOTPEmail = async (email: string, otp: string) => {
     try {
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/send-otp`;
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = `${getApiUrl()}/send-otp`;
       console.log('Sending OTP to:', apiUrl);
       
       const response = await fetch(apiUrl, {
@@ -127,7 +128,8 @@ export default function Signup() {
         return false;
       }
       
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       console.log('Response data:', data);
       return data.success;
     } catch (error) {
@@ -138,7 +140,8 @@ export default function Signup() {
 
   const checkEmailExists = async (email: string) => {
     try {
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/check-email`;
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = `${getApiUrl()}/check-email`;
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -147,7 +150,8 @@ export default function Signup() {
         body: JSON.stringify({ email }),
       });
       
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       return data.exists;
     } catch (error) {
       console.error('Check email error:', error);

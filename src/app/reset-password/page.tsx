@@ -63,7 +63,8 @@ export default function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/reset-password`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/reset-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -71,7 +72,8 @@ export default function ResetPasswordPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
 
       if (data.success) {
         setMessage("Password reset successfully! Redirecting to login...");

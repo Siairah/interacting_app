@@ -5,6 +5,10 @@
   border-radius: 8px;
   overflow: hidden;
   background-color: #f8f9fa;
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  contain: layout style paint;
 }
 
 .postMediaCarousel {
@@ -24,9 +28,30 @@
 
 .postMedia {
   width: 100%;
-  max-height: 400px;
-  object-fit: cover;
+  max-height: 600px;
   display: block;
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.postMedia img {
+  object-fit: cover;
+  max-height: 400px;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  pointer-events: none;
+}
+
+.postMedia video {
+  object-fit: contain;
+  width: 100%;
+  height: auto;
+  max-height: 600px;
+  background-color: #000;
+  pointer-events: auto;
 }
 
 .carouselControls {

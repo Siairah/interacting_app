@@ -74,7 +74,8 @@ export default function VerifyOtpResetPage() {
     setError("");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/forgot-password/verify-otp`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/forgot-password/verify-otp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -82,7 +83,8 @@ export default function VerifyOtpResetPage() {
         body: JSON.stringify({ email, otp: otpString }),
       });
 
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
 
       if (data.success) {
         // Redirect to reset password page
@@ -108,7 +110,8 @@ export default function VerifyOtpResetPage() {
     setError("");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/forgot-password`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/forgot-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -116,7 +119,8 @@ export default function VerifyOtpResetPage() {
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
 
       if (data.success) {
         setTimeLeft(300);

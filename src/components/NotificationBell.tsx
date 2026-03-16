@@ -38,16 +38,17 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     // Fetch existing notifications
     const fetchNotifications = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const { getApiUrl } = await import('@/utils/apiUtils');
         const { getAuthToken } = await import('@/utils/socketAuth');
         const token = getAuthToken();
         
-        const response = await fetch(`${apiUrl}/notifications?user_id=${userId}`, {
+        const response = await fetch(`${getApiUrl()}/notifications?user_id=${userId}`, {
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
         
         if (response.ok) {
-          const data = await response.json();
+          const { safeJson } = await import('@/utils/apiUtils');
+          const data = await safeJson<any>(response);
           if (data.success) {
             setNotifications(data.notifications || []);
             setUnreadCount(data.notifications.filter((n: Notification) => !n.is_read).length);
@@ -103,17 +104,21 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
       const handleNotification = (notification: Notification) => {
         console.log('🔔 New notification received:', notification);
         setNotifications(prev => {
-          // Check if notification already exists (avoid duplicates)
           const exists = prev.some(n => n.id === notification.id);
           if (exists) {
             console.log('⚠️ Duplicate notification ignored:', notification.id);
             return prev;
           }
-          console.log('✅ Adding new notification to list');
           return [notification, ...prev];
         });
         setUnreadCount(prev => prev + 1);
-        
+
+        // Show toast notification (always visible in-app)
+        import('@/components/ToastContainer').then(({ showToast }) => {
+          const type = notification.notification_type === 'warning' ? 'warning' : 'info';
+          showToast(notification.message, type, 5000);
+        });
+
         // Show browser notification if permission granted
         if ('Notification' in window && window.Notification.permission === 'granted') {
           new window.Notification(notification.message, {
@@ -201,11 +206,11 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
       
       // Call API to mark as read
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const { getApiUrl } = await import('@/utils/apiUtils');
         const { getAuthToken } = await import('@/utils/socketAuth');
         const token = getAuthToken();
         
-        await fetch(`${apiUrl}/notifications/mark-read/${notification.id}`, {
+        await fetch(`${getApiUrl()}/notifications/mark-read/${notification.id}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -238,11 +243,11 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     if (!userId) return;
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const { getApiUrl } = await import('@/utils/apiUtils');
       const { getAuthToken } = await import('@/utils/socketAuth');
       const token = getAuthToken();
       
-      await fetch(`${apiUrl}/notifications/mark-all-read`, {
+      await fetch(`${getApiUrl()}/notifications/mark-all-read`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

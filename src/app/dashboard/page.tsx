@@ -158,10 +158,12 @@ export default function DashboardPage() {
       const socket = getSocket();
       const socketId = socket?.id;
       
-      const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/get-posts?user_id=${userId}${socketId ? `&socket_id=${socketId}` : ''}`;
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const url = `${getApiUrl()}/get-posts?user_id=${userId}${socketId ? `&socket_id=${socketId}` : ''}`;
       const res = await fetch(url);
-      const data = await res.json();
-      if (data.success) {
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<{ success: boolean; posts?: Post[] }>(res);
+      if (data.success && data.posts) {
         setPosts(data.posts);
       }
     } catch (error) {
@@ -173,19 +175,22 @@ export default function DashboardPage() {
 
   async function fetchCircles(userId: string) {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/circles/list?user_id=${userId}`);
-      const data = await res.json();
-      if (data.success) {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/circles/list?user_id=${userId}`);
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<{ success: boolean; circles?: Circle[] }>(res);
+      if (data.success && data.circles) {
         // When user_id is provided, /list returns joined circles
         setCircles(data.circles);
         
         // For suggested circles, we need to fetch public circles without user_id
-        const suggestedRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/circles/list`);
-        const suggestedData = await suggestedRes.json();
-        if (suggestedData.success) {
+        const suggestedRes = await fetch(`${apiUrl}/circles/list`);
+        const suggestedData = await safeJson<{ success: boolean; circles?: Circle[] }>(suggestedRes);
+        if (suggestedData.success && suggestedData.circles) {
           // Filter out circles user is already in
-          const joinedCircleIds = data.circles.map((c: Circle) => c.id);
-          setSuggestedCircles(suggestedData.circles.filter((c: Circle) => !joinedCircleIds.includes(c.id)).slice(0, 3));
+          const joinedCircleIds = data.circles.map((c) => c.id);
+          setSuggestedCircles(suggestedData.circles.filter((c) => !joinedCircleIds.includes(c.id)).slice(0, 3));
         }
       }
     } catch (error) {
@@ -223,7 +228,8 @@ export default function DashboardPage() {
         });
       }
       
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/create-post`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const res = await fetch(`${getApiUrl()}/create-post`, {
         method: "POST",
         headers: { 
           ...(token ? { "Authorization": `Bearer ${token}` } : {})
@@ -231,14 +237,16 @@ export default function DashboardPage() {
         body: formData
       });
       
-      const data = await res.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
       if (data.success) {
         const { showToast } = await import('@/components/ToastContainer');
         
-        // Check if post was flagged and sent to pending
-        if (data.flagged || !data.is_approved) {
-          const reason = data.flagged_reason ? ` Reason: ${data.flagged_reason}` : '';
-          showToast(`Post submitted for review. It will be visible after admin approval.${reason}`, 'warning');
+        // Check if post was flagged by content moderation
+        if (data.flagged) {
+          showToast('Post flagged. Awaiting admin review.', 'warning', 5000);
+        } else if (!data.is_approved) {
+          showToast('Post submitted for review. It will be visible after admin approval.', 'warning');
         } else {
           showToast('Post created successfully', 'success');
         }
@@ -268,8 +276,8 @@ export default function DashboardPage() {
       const { getAuthToken } = await import('@/utils/socketAuth');
       const token = getAuthToken();
       
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/delete-post/${postId}`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const response = await fetch(`${getApiUrl()}/delete-post/${postId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -278,7 +286,8 @@ export default function DashboardPage() {
         body: JSON.stringify({ user_id: user.id })
       });
 
-      const data = await response.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(response);
       if (data.success) {
         setShowPostMenu(null);
         fetchPosts(user.id);
@@ -299,13 +308,15 @@ export default function DashboardPage() {
     if (!user) return;
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/toggle-like/${postId}`, {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const res = await fetch(`${getApiUrl()}/toggle-like/${postId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: user.id })
       });
       
-      const data = await res.json();
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
       if (data.success) {
         setPosts(posts.map(post => 
           post.id === postId 

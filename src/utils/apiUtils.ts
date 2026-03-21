@@ -9,15 +9,14 @@ export async function safeJson<T = unknown>(response: Response): Promise<T> {
 
   // If we got HTML (e.g. 404, 502 error page), throw with helpful message
   if (trimmed.startsWith('<')) {
-    const msg = `API returned HTML instead of JSON (status ${response.status}). Ensure your backend is running on port 5000 and all routes are mounted.`;
+    const msg = `API returned HTML (status ${response.status}). Backend may be on wrong port. Set NEXT_PUBLIC_API_URL=http://localhost:5001 in .env.local and restart Next.js.`;
     console.error(msg);
-    throw new Error('Server returned an invalid response. Please check your connection.');
+    throw new Error('Server returned an invalid response. Check backend port and .env.local.');
   }
 
-  // Try to parse - some APIs return JSON with wrong content-type
   if (!contentType.includes('application/json') && !(trimmed.startsWith('{') || trimmed.startsWith('['))) {
-    console.error('API returned non-JSON. Ensure your backend is running and the requested route exists.');
-    throw new Error('Server returned an invalid response. Please check your connection.');
+    console.error('API returned non-JSON. Set NEXT_PUBLIC_API_URL=http://localhost:5001 in .env.local, restart Next.js and backend.');
+    throw new Error('Invalid response. Check backend is running on port 5001.');
   }
 
   try {
@@ -27,7 +26,7 @@ export async function safeJson<T = unknown>(response: Response): Promise<T> {
   }
 }
 
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = 'http://localhost:5001';
 
 export function getApiUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_URL?.trim();

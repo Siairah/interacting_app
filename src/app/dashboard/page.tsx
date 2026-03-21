@@ -242,7 +242,7 @@ export default function DashboardPage() {
       if (data.success) {
         const { showToast } = await import('@/components/ToastContainer');
         
-        // Check if post was flagged by content moderation
+        // Show toast first so it's visible before modal closes
         if (data.flagged) {
           showToast('Post flagged. Awaiting admin review.', 'warning', 5000);
         } else if (!data.is_approved) {
@@ -263,6 +263,9 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error creating post:", error);
+      const { showToast } = await import('@/components/ToastContainer');
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      showToast('Failed to create post: ' + sanitizeErrorMessage(error), 'error');
     }
   }
 

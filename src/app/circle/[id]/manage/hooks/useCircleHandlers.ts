@@ -146,6 +146,7 @@ export function useCircleHandlers(
           refreshData();
         } else {
           const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+          const { showToast } = await import('@/components/ToastContainer');
           showToast(sanitizeErrorMessage(data.message || 'Failed to reject request'), 'error');
         }
       } catch (error) {
@@ -765,15 +766,19 @@ export function useCircleHandlers(
         const { safeJson } = await import('@/utils/apiUtils');
         const data = await safeJson<any>(response);
         if (data.success) {
+          const { showToast } = await import('@/components/ToastContainer');
           showToast('Flagged post rejected and deleted', 'success');
           refreshData();
         } else {
           const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+          const { showToast } = await import('@/components/ToastContainer');
           showToast(sanitizeErrorMessage(data.message || 'Failed to reject flagged post'), 'error');
         }
       } catch (error) {
         console.error('Error rejecting flagged post:', error);
-        showToast('Failed to reject flagged post', 'error');
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast('Failed to reject flagged post: ' + sanitizeErrorMessage(error), 'error');
       }
     });
   };

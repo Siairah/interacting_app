@@ -421,7 +421,7 @@ export default function CircleDetailPage() {
       if (data.success) {
         const { showToast } = await import('@/components/ToastContainer');
         
-        // Check if post was flagged by content moderation
+        // Show toast first so it's visible before modal closes
         if (data.flagged) {
           showToast('Post flagged. Awaiting admin review.', 'warning', 5000);
         } else if (!data.is_approved) {
@@ -457,7 +457,13 @@ export default function CircleDetailPage() {
   };
 
   const handleSaveEdit = async () => {
-    if (!editingPost || !currentUser || !editContent.trim()) return;
+    // Allow saving with text only, media only, or both
+    if (!editingPost || !currentUser) return;
+    if (!editContent.trim() && (!editMedia || editMedia.length === 0)) {
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Add content or media to your post', 'error');
+      return;
+    }
 
     setIsEditing(true);
     try {

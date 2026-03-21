@@ -400,6 +400,15 @@
     margin-bottom: 0.75rem;
 }
 
+.eventTitleLink {
+    text-decoration: none;
+    color: inherit;
+}
+
+.eventTitleLink:hover .eventTitle {
+    color: #667eea;
+}
+
 .eventTitle {
     font-weight: 600;
     margin-bottom: 0.25rem;
@@ -427,6 +436,34 @@
 .btnRsvp:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.eventMeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.eventMeta .reserveCount {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.eventMeta .reservedBadge {
+    color: #28a745;
+    font-size: 0.85rem;
+}
+
+.eventMeta .btnRsvp {
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.eventEmpty {
+    padding: 0.5rem 0;
 }
 
 /* =============== Community Items =============== */

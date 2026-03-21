@@ -45,6 +45,17 @@ export default function DashboardPage() {
   const [showViewPostModal, setShowViewPostModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [hiddenPosts, setHiddenPosts] = useState<Set<string>>(new Set());
+  const [reservingEventId, setReservingEventId] = useState<string | null>(null);
+  const [dashboardEvents, setDashboardEvents] = useState<Array<{
+    id: string;
+    title: string;
+    event_date: string;
+    location?: string;
+    reserve_count: number;
+    user_has_reserved: boolean;
+    circle_id: string;
+    circle_name: string;
+  }>>([]);
 
   // Hide-on-scroll navbar state
   const [isNavHidden, setIsNavHidden] = useState(false);
@@ -72,6 +83,7 @@ export default function DashboardPage() {
           setUser(userData);
           fetchPosts(userId);
           fetchCircles(userId);
+          fetchDashboardEvents(userId);
         } else {
           router.replace('/');
         }
@@ -195,6 +207,54 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error("Error fetching circles:", error);
+    }
+  }
+
+  async function fetchDashboardEvents(userId: string) {
+    try {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      const res = await fetch(`${getApiUrl()}/events/dashboard?user_id=${userId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<{ success: boolean; events?: typeof dashboardEvents }>(res);
+      if (data.success && data.events) setDashboardEvents(data.events);
+      else setDashboardEvents([]);
+    } catch {
+      setDashboardEvents([]);
+    }
+  }
+
+  async function handleReserveFromDashboard(eventId: string, userId: string) {
+    setReservingEventId(eventId);
+    try {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      const res = await fetch(`${getApiUrl()}/events/${eventId}/reserve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ user_id: userId })
+      });
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
+      if (data.success) {
+        if (user?.id) fetchDashboardEvents(user.id);
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast('Reserved!', 'success');
+      } else {
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to reserve'), 'error');
+      }
+    } catch (err) {
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to reserve: ' + sanitizeErrorMessage(err), 'error');
+    } finally {
+      setReservingEventId(null);
     }
   }
 
@@ -382,16 +442,38 @@ export default function DashboardPage() {
             <h3 className={styles.widgetTitle}>
               <i className="fas fa-calendar-check"></i> Upcoming Events
             </h3>
-            <div className={styles.eventItem}>
-              <div className={styles.eventTitle}>Design Conference 2023</div>
-              <small className={styles.eventDate}>Oct 15-17 • San Francisco</small>
-              <button className={styles.btnRsvp}>RSVP</button>
-            </div>
-            <div className={styles.eventItem}>
-              <div className={styles.eventTitle}>Tech Meetup</div>
-              <small className={styles.eventDate}>Nov 5 • Virtual</small>
-              <button className={styles.btnRsvp}>RSVP</button>
-            </div>
+            {dashboardEvents.length > 0 ? (
+              dashboardEvents.slice(0, 5).map((ev) => (
+                <div key={ev.id} className={styles.eventItem}>
+                  <Link href={`/circle/${ev.circle_id}?tab=events`} className={styles.eventTitleLink}>
+                    <div className={styles.eventTitle}>{ev.title}</div>
+                    <small className={styles.eventDate}>
+                      {new Date(ev.event_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {ev.location ? ` • ${ev.location}` : ''}
+                    </small>
+                  </Link>
+                  <div className={styles.eventMeta}>
+                    <span className={styles.reserveCount}><i className="fas fa-user-check"></i> {ev.reserve_count}</span>
+                    {ev.user_has_reserved ? (
+                      <span className={styles.reservedBadge}><i className="fas fa-check"></i> Reserved</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.btnRsvp}
+                        disabled={reservingEventId === ev.id}
+                        onClick={() => user?.id && handleReserveFromDashboard(ev.id, user.id)}
+                      >
+                        {reservingEventId === ev.id ? '...' : 'RSVP'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.eventEmpty}>
+                <small>No upcoming events. Join circles to see events.</small>
+              </div>
+            )}
           </div>
         </aside>
 

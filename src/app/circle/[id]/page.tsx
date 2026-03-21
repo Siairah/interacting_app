@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navigation from "@/components/Navigation";
 import PostCard from "@/components/PostCard";
 import ReportPostModal from "@/components/ReportPostModal";
 import ViewPostModal from "@/components/ViewPostModal";
 import WarningsBanner from "@/components/WarningsBanner";
+import CircleTabs from "./CircleTabs";
 import { Post } from "@/components/types";
 import styles from "./circle.module.css";
 
@@ -62,9 +63,20 @@ interface Circle {
   total_pending?: number;
 }
 
+interface CircleEvent {
+  id: string;
+  title: string;
+  description?: string;
+  event_date: string;
+  location?: string;
+  reserve_count: number;
+  user_has_reserved: boolean;
+}
+
 export default function CircleDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params.id as string;
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -80,10 +92,23 @@ export default function CircleDetailPage() {
   const [showViewPostModal, setShowViewPostModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [hiddenPosts, setHiddenPosts] = useState<Set<string>>(new Set());
-  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const   [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editMedia, setEditMedia] = useState<File[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Events tab (allow ?tab=events from URL)
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<'posts' | 'events'>(tabParam === 'events' ? 'events' : 'posts');
+  const [events, setEvents] = useState<CircleEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [showAddEvent, setShowAddEvent] = useState(false);
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+  const [eventDescription, setEventDescription] = useState("");
+  const [addingEvent, setAddingEvent] = useState(false);
+  const [reservingEventId, setReservingEventId] = useState<string | null>(null);
 
   // Hide-on-scroll navbar state
   const [isNavHidden, setIsNavHidden] = useState(false);
@@ -232,6 +257,151 @@ export default function CircleDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchEvents = async () => {
+    if (!currentUser || !circle?.is_member) return;
+    setEventsLoading(true);
+    try {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      const res = await fetch(
+        `${getApiUrl()}/events?circle_id=${id}&user_id=${currentUser.id}`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<{ success: boolean; events?: CircleEvent[] }>(res);
+      if (data.success && data.events) setEvents(data.events);
+      else setEvents([]);
+    } catch {
+      setEvents([]);
+    } finally {
+      setEventsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tabParam === 'events') setActiveTab('events');
+  }, [tabParam]);
+
+  useEffect(() => {
+    if (activeTab === 'events' && circle?.is_member && currentUser) {
+      fetchEvents();
+    }
+  }, [activeTab, circle?.is_member, id, currentUser?.id]);
+
+  const handleAddEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !eventTitle.trim() || !eventDate) return;
+    setAddingEvent(true);
+    try {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      const res = await fetch(`${getApiUrl()}/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          circle_id: id,
+          user_id: currentUser.id,
+          title: eventTitle.trim(),
+          description: eventDescription.trim(),
+          event_date: eventDate,
+          location: eventLocation.trim()
+        })
+      });
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
+      if (data.success) {
+        setShowAddEvent(false);
+        setEventTitle('');
+        setEventDate('');
+        setEventLocation('');
+        setEventDescription('');
+        fetchEvents();
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast('Event created', 'success');
+      } else {
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to create event'), 'error');
+      }
+    } catch (err) {
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to create event: ' + sanitizeErrorMessage(err), 'error');
+    } finally {
+      setAddingEvent(false);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!currentUser) return;
+    const { confirmDialog } = await import('@/utils/confirmDialog');
+    const confirmed = await confirmDialog('Delete this event?', 'Delete', 'Cancel', 'danger');
+    if (!confirmed) return;
+    try {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      const res = await fetch(
+        `${getApiUrl()}/events/${eventId}?user_id=${currentUser.id}`,
+        { method: 'DELETE', headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      );
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
+      if (data.success) {
+        fetchEvents();
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast('Event deleted', 'success');
+      } else {
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to delete'), 'error');
+      }
+    } catch (err) {
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to delete: ' + sanitizeErrorMessage(err), 'error');
+    }
+  };
+
+  const handleReserveEvent = async (eventId: string) => {
+    if (!currentUser) return;
+    setReservingEventId(eventId);
+    try {
+      const { getApiUrl } = await import('@/utils/apiUtils');
+      const { getAuthToken } = await import('@/utils/socketAuth');
+      const token = getAuthToken();
+      const res = await fetch(`${getApiUrl()}/events/${eventId}/reserve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ user_id: currentUser.id })
+      });
+      const { safeJson } = await import('@/utils/apiUtils');
+      const data = await safeJson<any>(res);
+      if (data.success) {
+        fetchEvents();
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast('Reserved!', 'success');
+      } else {
+        const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+        const { showToast } = await import('@/components/ToastContainer');
+        showToast(sanitizeErrorMessage(data.message || 'Failed to reserve'), 'error');
+      }
+    } catch (err) {
+      const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+      const { showToast } = await import('@/components/ToastContainer');
+      showToast('Failed to reserve: ' + sanitizeErrorMessage(err), 'error');
+    } finally {
+      setReservingEventId(null);
+    }
+  };
+
+  const formatEventDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   const handleJoinCircle = async () => {
@@ -550,6 +720,79 @@ export default function CircleDetailPage() {
     }
   };
 
+  const renderEventsTab = () => (
+    <div key="events-tab">
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>Upcoming Events</h2>
+        {circle && circle.is_member && circle.is_admin && !circle.is_restricted && !circle.is_banned && (
+          <button onClick={() => setShowAddEvent(true)} className={styles.createPostBtn}>
+            <i className="fas fa-plus"></i> Add Event
+          </button>
+        )}
+      </div>
+      {circle && circle.is_member && !circle.is_restricted && !circle.is_banned ? (
+        eventsLoading ? (
+          <div className={styles.emptyState}>
+            <div className={styles.spinner}></div>
+            <p>Loading events...</p>
+          </div>
+        ) : events.length > 0 ? (
+          <div className={styles.eventsList}>
+            {events.map((ev) => (
+              <div key={ev.id} className={styles.eventItem}>
+                <div className={styles.eventItemHeader}>
+                  <div>
+                    <div className={styles.eventTitle}>{ev.title}</div>
+                    <small className={styles.eventDate}>
+                      {formatEventDate(ev.event_date)}
+                      {ev.location ? ` • ${ev.location}` : ''}
+                    </small>
+                  </div>
+                  {circle.is_admin && (
+                    <button className={styles.eventDeleteBtn} onClick={() => handleDeleteEvent(ev.id)} title="Delete event">
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  )}
+                </div>
+                {ev.description && <p className={styles.eventDescription}>{ev.description}</p>}
+                <div className={styles.eventFooter}>
+                  <span className={styles.reserveCount}><i className="fas fa-user-check"></i> {ev.reserve_count} reserved</span>
+                  {!ev.user_has_reserved ? (
+                    <button className={styles.btnRsvp} onClick={() => handleReserveEvent(ev.id)} disabled={reservingEventId === ev.id}>
+                      {reservingEventId === ev.id ? '...' : 'RSVP'}
+                    </button>
+                  ) : (
+                    <span className={styles.reservedBadge}><i className="fas fa-check"></i> Reserved</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.emptyState}>
+            <i className="fas fa-calendar-times"></i>
+            <h3>No Upcoming Events</h3>
+            <p>Events disappear after their scheduled time.</p>
+            {circle.is_admin && (
+              <button onClick={() => setShowAddEvent(true)} className={styles.createPostBtn}>
+                <i className="fas fa-plus"></i> Add Event
+              </button>
+            )}
+          </div>
+        )
+      ) : (
+        <div className={styles.joinPrompt}>
+          <div className={styles.joinPromptIcon}><i className="fas fa-lock"></i></div>
+          <h3 className={styles.joinPromptTitle}>Join to View Events</h3>
+          <p className={styles.joinPromptText}>Join this circle to see and reserve events.</p>
+          <button onClick={handleJoinCircle} className={styles.joinPromptBtn}>
+            <i className="fas fa-sign-in-alt"></i> Join Circle
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -679,152 +922,101 @@ export default function CircleDetailPage() {
             </div>
           </div>
 
-          {/* Right Main Content - Posts */}
+          {/* Right Main Content - Posts & Events */}
           <div className={`${styles.circleMainContent} ${isNavHidden ? styles.compactTop : ''}`}>
-            <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>Community Posts</h2>
-              {(circle.is_member || circle.visibility !== 'private') && !circle.is_restricted && !circle.is_banned && (
-                <button 
-                  onClick={() => setShowCreatePost(true)} 
-                  className={styles.createPostBtn}
-                >
-                  <i className="fas fa-plus"></i> Create Post
-                </button>
-              )}
+            {/* Tabs: Posts | Events */}
+            <div className={styles.contentTabs}>
+              <button
+                className={`${styles.tabBtn} ${activeTab === 'posts' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('posts')}
+              >
+                <i className="fas fa-comments"></i> Posts
+              </button>
+              <button
+                className={`${styles.tabBtn} ${activeTab === 'events' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('events')}
+              >
+                <i className="fas fa-calendar-alt"></i> Events
+              </button>
             </div>
 
-            {/* Warnings Banner */}
-            {currentUser && circle.is_member && (
-              <WarningsBanner circleId={id} userId={currentUser.id} />
-            )}
-
-            <div className={styles.postsGrid}>
-              {/* Django Logic: Handle restricted/banned users */}
-              {circle.is_restricted ? (
-                <div className={styles.joinPrompt}>
-                  <div className={styles.joinPromptIcon}>
-                    <i className="fas fa-user-lock"></i>
-                  </div>
-                  <h3 className={styles.joinPromptTitle}>Access Restricted</h3>
-                  <p className={styles.joinPromptText}>
-                    You are restricted from this circle until <strong>{circle.restricted_until}</strong>.
-                  </p>
-                </div>
-              ) : circle.is_banned ? (
-                <div className={styles.joinPrompt}>
-                  <div className={styles.joinPromptIcon}>
-                    <i className="fas fa-ban"></i>
-                  </div>
-                  <h3 className={styles.joinPromptTitle}>Banned</h3>
-                  <p className={styles.joinPromptText}>
-                    You have been banned from this circle and cannot access its contents.
-                  </p>
-                </div>
-              ) : (circle.is_member || circle.visibility !== 'private') && circle.posts && circle.posts.length > 0 ? (
-                circle.posts.map((post: BackendPost) => {
-                  const postCardData = convertToPostCardFormat(post);
-                  return (
-                  <PostCard
-                    key={post.id}
-                    post={postCardData}
-                    userId={currentUser?.id}
-                    showComments={false}
-                    onLike={handleLike}
-                    onCommentAdded={handleCommentAdded}
-                    customOptionsMenu={
-                      <div className={styles.postOptionsDropdown}>
-                        <button 
-                          className={styles.postOptions}
-                          onClick={() => setShowPostMenu(showPostMenu === post.id ? null : post.id)}
-                        >
-                          <i className="fas fa-ellipsis-v"></i>
-                        </button>
-                        {showPostMenu === post.id && (
-                          <div className={styles.postDropdownMenu}>
-                            <button 
-                              className={styles.dropdownItem}
-                              onClick={() => {
-                                setShowPostMenu(null);
-                                setSelectedPost(postCardData);
-                                setShowViewPostModal(true);
-                              }}
-                            >
-                              <i className="fas fa-eye"></i> View Post
-                            </button>
-                            {currentUser?.id === post.user.id && (
-                              <>
-                                <button 
-                                  className={styles.dropdownItem}
-                                  onClick={() => handleEditPost(postCardData)}
-                                >
-                                  <i className="fas fa-edit"></i> Edit Post
-                                </button>
-                                <button 
-                                  className={`${styles.dropdownItem} ${styles.textDanger}`}
-                                  onClick={() => {
-                                    setShowPostMenu(null);
-                                    handleDeletePost(post.id);
-                                  }}
-                                >
-                                  <i className="fas fa-trash"></i> Delete Post
-                                </button>
-                              </>
-                            )}
-                            {currentUser?.id !== post.user.id && (
-                              <button
-                                className={styles.dropdownItem}
-                                onClick={() => {
-                                  setShowPostMenu(null);
-                                  setSelectedPost(postCardData);
-                                  setShowReportModal(true);
-                                }}
-                              >
-                                <i className="fas fa-flag"></i> Report
-                              </button>
-                            )}
-                            <button
-                              className={styles.dropdownItem}
-                              onClick={() => {
-                                setShowPostMenu(null);
-                                setHiddenPosts(prev => new Set(prev).add(post.id));
-                              }}
-                            >
-                              <i className="fas fa-eye-slash"></i> Hide Post
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    }
-                  />
-                );
-              })
-            ) : (circle.is_member || circle.visibility !== 'private') ? (
-              <div className={styles.emptyState}>
-                <i className="fas fa-comment-slash"></i>
-                <h3>No Posts Yet</h3>
-                <p>Be the first to share something with this community!</p>
-                {(circle.is_member || circle.visibility !== 'private') && !circle.is_restricted && !circle.is_banned && (
-                  <button onClick={() => setShowCreatePost(true)} className={styles.createPostBtn}>
-                    <i className="fas fa-plus"></i> Create Post
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className={styles.joinPrompt}>
-                <div className={styles.joinPromptIcon}>
-                  <i className="fas fa-lock"></i>
-                </div>
-                <h3 className={styles.joinPromptTitle}>Join to View Posts</h3>
-                <p className={styles.joinPromptText}>
-                  This is a private circle. Join to see posts and participate in discussions.
-                </p>
-                <button onClick={handleJoinCircle} className={styles.joinPromptBtn}>
-                  <i className="fas fa-sign-in-alt"></i> Join Circle
-                </button>
-              </div>
-            )}
+            <CircleTabs
+              activeTab={activeTab}
+              circle={circle}
+              currentUser={currentUser}
+              id={id}
+              showPostMenu={showPostMenu}
+              hiddenPosts={hiddenPosts}
+              convertToPostCardFormat={convertToPostCardFormat}
+              setShowCreatePost={setShowCreatePost}
+              setShowAddEvent={setShowAddEvent}
+              setShowPostMenu={setShowPostMenu}
+              setSelectedPost={setSelectedPost}
+              setShowViewPostModal={setShowViewPostModal}
+              setShowReportModal={setShowReportModal}
+              setHiddenPosts={setHiddenPosts}
+              handleEditPost={handleEditPost}
+              handleDeletePost={handleDeletePost}
+              handleLike={handleLike}
+              handleCommentAdded={handleCommentAdded}
+              handleJoinCircle={handleJoinCircle}
+              renderEventsTab={renderEventsTab}
+              styles={styles}
+            />
           </div>
         </div>
+      )}
+
+      {/* Add Event Modal */}
+      {showAddEvent && (
+        <div className={styles.modalOverlay} onClick={() => setShowAddEvent(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>Add Event</h3>
+              <button onClick={() => setShowAddEvent(false)} className={styles.btnClose}>×</button>
+            </div>
+            <form onSubmit={handleAddEvent} className={styles.modalBody}>
+              <label className={styles.formLabel}>Title *</label>
+              <input
+                type="text"
+                value={eventTitle}
+                onChange={(e) => setEventTitle(e.target.value)}
+                placeholder="Event name"
+                className={styles.formInput}
+                required
+              />
+              <label className={styles.formLabel}>Date & Time *</label>
+              <input
+                type="datetime-local"
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                className={styles.formInput}
+                required
+              />
+              <label className={styles.formLabel}>Location</label>
+              <input
+                type="text"
+                value={eventLocation}
+                onChange={(e) => setEventLocation(e.target.value)}
+                placeholder="e.g. San Francisco, Virtual"
+                className={styles.formInput}
+              />
+              <label className={styles.formLabel}>Description</label>
+              <textarea
+                value={eventDescription}
+                onChange={(e) => setEventDescription(e.target.value)}
+                placeholder="Optional details"
+                className={styles.postTextarea}
+                rows={3}
+              />
+              <div className={styles.modalFooter}>
+                <button type="button" onClick={() => setShowAddEvent(false)} className={styles.btnCancel}>Cancel</button>
+                <button type="submit" className={styles.btnPost} disabled={addingEvent}>
+                  {addingEvent ? 'Adding...' : 'Add Event'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

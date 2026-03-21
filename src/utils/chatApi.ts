@@ -1,4 +1,4 @@
-import { safeJson, getApiUrl } from './apiUtils';
+import { safeJson, getApiUrl, getApiErrorMessage } from './apiUtils';
 
 export interface ChatRoom {
   id: string;
@@ -58,8 +58,7 @@ export async function getChatRooms(userId: string, circleId?: string): Promise<C
       return rooms;
     }
     return [];
-  } catch (error) {
-    console.error('Error fetching chat rooms:', error);
+  } catch {
     return [];
   }
 }
@@ -101,8 +100,7 @@ export async function getChatMessages(roomId: string, userId: string, limit: num
         }));
     }
     return [];
-  } catch (error) {
-    console.error('Error fetching messages:', error);
+  } catch {
     return [];
   }
 }
@@ -136,8 +134,7 @@ export async function sendMessage(
     const data = await safeJson<any>(res);
     return data;
   } catch (error) {
-    console.error('Error sending message:', error);
-    return { success: false, error: 'Failed to send message' };
+    return { success: false, error: getApiErrorMessage(error, 'Failed to send message') };
   }
 }
 
@@ -160,8 +157,7 @@ export async function deleteMessage(
     const data = await safeJson<any>(res);
     return data;
   } catch (error) {
-    console.error('Error deleting message:', error);
-    return { success: false, message: 'Failed to delete message' };
+    return { success: false, message: getApiErrorMessage(error, 'Failed to delete message') };
   }
 }
 
@@ -184,8 +180,7 @@ export async function removeGroupMember(
     const data = await safeJson<any>(res);
     return data;
   } catch (error) {
-    console.error('Error removing member:', error);
-    return { success: false, message: 'Failed to remove member' };
+    return { success: false, message: getApiErrorMessage(error, 'Failed to remove member') };
   }
 }
 
@@ -206,8 +201,7 @@ export async function leaveGroup(
     const data = await safeJson<any>(res);
     return data;
   } catch (error) {
-    console.error('Error leaving group:', error);
-    return { success: false, message: 'Failed to leave group' };
+    return { success: false, message: getApiErrorMessage(error, 'Failed to leave group') };
   }
 }
 
@@ -230,8 +224,7 @@ export async function addGroupMembers(
     const data = await safeJson<any>(res);
     return data;
   } catch (error) {
-    console.error('Error adding members:', error);
-    return { success: false, message: 'Failed to add members' };
+    return { success: false, message: getApiErrorMessage(error, 'Failed to add members') };
   }
 }
 
@@ -252,8 +245,7 @@ export async function deleteGroup(
     const data = await safeJson<any>(res);
     return data;
   } catch (error) {
-    console.error('Error deleting group:', error);
-    return { success: false, message: 'Failed to delete group' };
+    return { success: false, message: getApiErrorMessage(error, 'Failed to delete group') };
   }
 }
 
@@ -271,8 +263,7 @@ export async function createDM(user1Id: string, user2Id: string): Promise<{ succ
     const data = await safeJson<any>(res);
     return data;
   } catch (error) {
-    console.error('Error creating DM:', error);
-    return { success: false, error: 'Failed to create DM' };
+    return { success: false, error: getApiErrorMessage(error, 'Failed to create DM') };
   }
 }
 
@@ -308,8 +299,7 @@ export async function createGroupInCircle(
     }
     return data;
   } catch (error) {
-    console.error('Error creating group:', error);
-    return { success: false, error: 'Failed to create group' };
+    return { success: false, error: getApiErrorMessage(error, 'Failed to create group') };
   }
 }
 
@@ -376,8 +366,7 @@ export async function markMessagesAsSeen(roomId: string, userId: string): Promis
     const data = await safeJson<any>(res);
     return data;
   } catch (error) {
-    console.error('Error marking messages as seen:', error);
-    return { success: false, message: 'Failed to mark messages as seen' };
+    return { success: false, message: getApiErrorMessage(error, 'Failed to mark messages as seen') };
   }
 }
 
@@ -400,8 +389,7 @@ export async function updateGroupAvatar(
     const data = await safeJson<any>(res);
     return data;
   } catch (error) {
-    console.error('Error updating group avatar:', error);
-    return { success: false, message: 'Failed to update group avatar' };
+    return { success: false, message: getApiErrorMessage(error, 'Failed to update group avatar') };
   }
 }
 

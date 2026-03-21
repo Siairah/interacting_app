@@ -190,7 +190,7 @@ export default function Navigation({ isHidden = false }: NavigationProps) {
           </li>
           <li className={styles.navItem}>
             <Link 
-              href="#" 
+              href="/events" 
               className={`${styles.navLink} ${isActive('/events') ? styles.active : ''}`}
             >
               <i className="fas fa-calendar-alt"></i>

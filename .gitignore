@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# backend (separate repo)
+backend learn/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

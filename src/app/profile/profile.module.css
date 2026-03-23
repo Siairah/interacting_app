@@ -746,6 +746,22 @@
   text-decoration: underline;
 }
 
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  color: #856404;
+  margin-bottom: 1.5rem;
+}
+
+.errorBanner i {
+  flex-shrink: 0;
+}
+
 /* Edit Modal */
 .modalOverlay {
   position: fixed;

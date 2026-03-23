@@ -211,8 +211,9 @@ export default function ProfilePage() {
           }
         }
       }
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
+    } catch (err) {
+      const { getApiErrorMessage } = await import('@/utils/apiUtils');
+      setError(getApiErrorMessage(err, 'Unable to load profile. Make sure the backend is running.'));
     } finally {
       setLoading(false);
     }
@@ -527,7 +528,7 @@ export default function ProfilePage() {
       <div className={styles.errorContainer}>
         <i className="fas fa-exclamation-circle"></i>
         <h2>Unable to load profile</h2>
-        <p>Please <Link href="/">login</Link> to continue.</p>
+        <p>{error ? error : <>Please <Link href="/">login</Link> to continue.</>}</p>
       </div>
     );
   }
@@ -538,6 +539,12 @@ export default function ProfilePage() {
       <Navigation />
 
       <div className={styles.container}>
+        {error && (
+          <div className={styles.errorBanner}>
+            <i className="fas fa-exclamation-triangle"></i>
+            {error}
+          </div>
+        )}
         {/* Profile Header */}
         <div className={styles.profileHeader}>
           <div className={styles.profilePicWrapper}>

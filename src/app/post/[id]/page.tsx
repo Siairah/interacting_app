@@ -45,7 +45,7 @@ export default function PostDetailPage() {
   }, []);
 
   useEffect(() => {
-    // Get user ID from localStorage - check both 'user_id' and 'user' object
+    // Resolve user from tab session (socketAuth)
     const loadUser = async () => {
       // Use Socket.IO first, then fallback
       const { ensureAuth } = await import('@/utils/socketAuth');

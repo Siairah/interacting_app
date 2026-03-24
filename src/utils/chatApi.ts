@@ -109,9 +109,10 @@ export async function sendMessage(
   roomId: string,
   senderId: string,
   content: string,
-  messageType: 'text' | 'media' = 'text',
+  messageType: 'text' | 'media' | 'call_log' = 'text',
   media?: File,
-  replyTo?: string
+  replyTo?: string,
+  callMeta?: { call_status?: NonNullable<ChatMessage['call_status']>; call_duration?: number | null }
 ): Promise<{ success: boolean; message?: ChatMessage; error?: string }> {
   try {
     const formData = new FormData();
@@ -125,6 +126,12 @@ export async function sendMessage(
     if (replyTo) {
       formData.append('reply_to', replyTo);
     }
+    if (callMeta?.call_status) {
+      formData.append('call_status', callMeta.call_status);
+    }
+    if (callMeta?.call_duration != null) {
+      formData.append('call_duration', String(callMeta.call_duration));
+    }
 
     const res = await fetch(`${getApiUrl()}/chat/send-message`, {
       method: 'POST',
@@ -132,7 +139,12 @@ export async function sendMessage(
     });
 
     const data = await safeJson<any>(res);
-    return data;
+    const chatMessage = data.chat_message ?? data.message;
+    return {
+      success: !!data.success,
+      message: chatMessage as ChatMessage | undefined,
+      error: data.success ? undefined : data.message,
+    };
   } catch (error) {
     return { success: false, error: getApiErrorMessage(error, 'Failed to send message') };
   }

@@ -1,24 +1,47 @@
+/* Chat shell — full width so the conversation column uses all horizontal space */
 .messengerApp {
   display: flex;
-  height: calc(100vh - 60px);
+  flex-direction: row;
+  width: 100%;
   max-width: 100%;
-  margin: 0 auto;
-  background-color: #fff;
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  margin: 0;
+  margin-top: 70px;
+  height: calc(100dvh - 70px);
+  min-height: 0;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
   position: relative;
   overflow: hidden;
-  margin-top: 60px;
+  border: none;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+@media (max-width: 768px) {
+  .messengerApp {
+    flex-direction: column;
+    margin-top: 0;
+    height: calc(100dvh - 80px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    border-radius: 0;
+    border: none;
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 100%;
+    box-shadow: none;
+  }
 }
 
 .loadingContainer {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100dvh;
+  padding: 2rem;
 }
 
 .loader {
-  font-size: 1.2rem;
-  color: #6a14eb;
+  font-size: 1.1rem;
+  color: #667eea;
+  font-weight: 500;
 }
-

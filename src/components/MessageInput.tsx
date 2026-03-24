@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import styles from './MessageInput.module.css';
 
 interface MessageInputProps {
@@ -55,9 +55,6 @@ export default function MessageInput({ onSend }: MessageInputProps) {
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
         />
-        <button className={styles.emojiBtn} type="button">
-          <i className="far fa-smile"></i>
-        </button>
       </div>
       <input
         type="file"

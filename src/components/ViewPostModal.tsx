@@ -67,18 +67,8 @@ export default function ViewPostModal({
     setIsLoadingPost(true);
     try {
       const { getApiUrl } = await import('@/utils/apiUtils');
-      let currentUserId = localStorage.getItem('user_id');
-      if (!currentUserId) {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          try {
-            const userObj = JSON.parse(userStr);
-            currentUserId = userObj.id || userObj._id || null;
-          } catch (e) {
-            console.error('Error parsing user object:', e);
-          }
-        }
-      }
+      const { getUserId } = await import('@/utils/socketAuth');
+      const currentUserId = getUserId();
 
       const url = currentUserId
         ? `${getApiUrl()}/get-post/${post.id}?user_id=${currentUserId}`

@@ -1,6 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# ----------------------
+# Dependencies
+# ----------------------
 /node_modules
 /.pnp
 .pnp.*
@@ -10,35 +12,59 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# ----------------------
+# Testing
+# ----------------------
 /coverage
 
-# next.js
+# ----------------------
+# Next.js
+# ----------------------
 /.next/
 /out/
 
-# production
+# ----------------------
+# Production
+# ----------------------
 /build
 
-# misc
+# ----------------------
+# Misc
+# ----------------------
 .DS_Store
 *.pem
 
-# backend (separate repo)
-backend learn/
+# ----------------------
+# Local / Tooling (do not commit)
+# Ignore PTH folder anywhere in repo
+**/PTH/
 
-# debug
+# ----------------------
+# Backend (separate repo)
+# Ignore backend learn folder anywhere in repo
+**/backend learn/
+
+# ----------------------
+# Debug logs
+# ----------------------
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# ----------------------
+# Env files
+# ----------------------
 .env*
 
-# vercel
+# ----------------------
+# Vercel
+# ----------------------
 .vercel
 
-# typescript
+# ----------------------
+# TypeScript
+# ----------------------
 *.tsbuildinfo
 next-env.d.ts
+*.md

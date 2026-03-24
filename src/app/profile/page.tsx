@@ -304,7 +304,10 @@ export default function ProfilePage() {
           profilePic: data.profile.profile_pic
         };
         setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        const tid = sessionStorage.getItem('socket_tab_id');
+        if (tid) {
+          sessionStorage.setItem(`tab_user_data_${tid}`, JSON.stringify(updatedUser));
+        }
         const { showToast } = await import('@/components/ToastContainer');
         showToast('Profile picture updated successfully!', 'success');
       } else {
@@ -421,7 +424,10 @@ export default function ProfilePage() {
         };
         
         setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        const tid = sessionStorage.getItem('socket_tab_id');
+        if (tid) {
+          sessionStorage.setItem(`tab_user_data_${tid}`, JSON.stringify(updatedUser));
+        }
       }
 
       setSuccess('Profile updated successfully!');

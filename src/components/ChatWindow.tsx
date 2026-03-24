@@ -2,11 +2,14 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { ChatRoom, ChatMessage, getChatMessages, sendMessage, deleteMessage, markMessagesAsSeen } from '@/utils/chatApi';
+import type { CallLogEvent, WebRTCSignal } from '@/types/webrtc';
 import { useChatSocket } from '@/hooks/useChatSocket';
 import MessageItem from './MessageItem';
 import MessageInput from './MessageInput';
 import MediaViewer from './MediaViewer';
 import GroupMenu from './GroupMenu';
+import CallOverlay from './CallOverlay';
+import { useWebRTCCall } from '@/hooks/useWebRTCCall';
 import styles from './ChatWindow.module.css';
 
 interface ChatWindowProps {
@@ -14,9 +17,18 @@ interface ChatWindowProps {
   userId: string;
   userData: any;
   onRoomUpdate?: (room: ChatRoom) => void;
+  pendingOffer?: WebRTCSignal | null;
+  onPendingOfferConsumed?: () => void;
 }
 
-export default function ChatWindow({ room, userId, userData, onRoomUpdate }: ChatWindowProps) {
+export default function ChatWindow({
+  room,
+  userId,
+  userData,
+  onRoomUpdate,
+  pendingOffer,
+  onPendingOfferConsumed,
+}: ChatWindowProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -26,6 +38,71 @@ export default function ChatWindow({ room, userId, userData, onRoomUpdate }: Cha
   const isLoadingOlderRef = useRef(false);
 
   const { messages: socketMessages, setMessages: setSocketMessages, markAsRead } = useChatSocket(room?.id || null, userId);
+
+  const peerUserId =
+    room && !room.is_group ? room.members.find((m) => m.id !== userId)?.id ?? null : null;
+  const canCall = Boolean(room && !room.is_group && peerUserId);
+
+  const handleCallLog = useCallback(
+    async (event: CallLogEvent) => {
+      if (!room || !peerUserId) return;
+      const label = event.media === 'video' ? 'Video' : 'Voice';
+      let content = '';
+      let call_status: NonNullable<ChatMessage['call_status']>;
+      let call_duration: number | undefined;
+
+      switch (event.kind) {
+        case 'cancelled':
+          content = `${label} call — no answer`;
+          call_status = 'cancelled';
+          break;
+        case 'declined':
+          content = `${label} call declined`;
+          call_status = 'declined';
+          break;
+        case 'answered':
+          content = `${label} call`;
+          call_status = 'answered';
+          call_duration = event.durationSec;
+          break;
+        default:
+          return;
+      }
+
+      await sendMessage(
+        room.id,
+        event.senderId,
+        content,
+        'call_log',
+        undefined,
+        undefined,
+        { call_status, call_duration }
+      );
+    },
+    [room, peerUserId]
+  );
+
+  const {
+    uiState: callUiState,
+    incomingMedia,
+    localStream,
+    remoteStream,
+    error: callError,
+    startAudioCall,
+    startVideoCall,
+    acceptIncoming,
+    rejectIncoming,
+    cancelOutgoing,
+    endCall,
+    isMuted,
+    isVideoOff,
+    toggleMute,
+    toggleVideo,
+  } = useWebRTCCall(room?.id ?? null, userId, peerUserId, canCall, {
+    onCallLog: handleCallLog,
+    pendingOffer,
+    onPendingOfferConsumed,
+  });
 
   useEffect(() => {
     if (room) {
@@ -323,6 +400,28 @@ export default function ChatWindow({ room, userId, userData, onRoomUpdate }: Cha
           </div>
         </div>
         <div className={styles.headerRight}>
+          {canCall && (
+            <div className={styles.headerCallGroup}>
+              <button
+                type="button"
+                className={styles.headerCallBtn}
+                onClick={startAudioCall}
+                title="Voice call"
+                aria-label="Start voice call"
+              >
+                <i className="fas fa-phone"></i>
+              </button>
+              <button
+                type="button"
+                className={styles.headerCallBtn}
+                onClick={startVideoCall}
+                title="Video call"
+                aria-label="Start video call"
+              >
+                <i className="fas fa-video"></i>
+              </button>
+            </div>
+          )}
           {room.is_group && (
             <button 
               className={styles.headerActionBtn} 
@@ -369,6 +468,26 @@ export default function ChatWindow({ room, userId, userData, onRoomUpdate }: Cha
       </div>
 
       <MessageInput onSend={handleSendMessage} />
+
+      {canCall && (
+        <CallOverlay
+          uiState={callUiState}
+          incomingMedia={incomingMedia}
+          peerName={getDisplayName()}
+          peerPic={getDisplayPic()}
+          localStream={localStream}
+          remoteStream={remoteStream}
+          error={callError}
+          isMuted={isMuted}
+          isVideoOff={isVideoOff}
+          onAccept={acceptIncoming}
+          onReject={rejectIncoming}
+          onCancelOutgoing={cancelOutgoing}
+          onEnd={endCall}
+          onToggleMute={toggleMute}
+          onToggleVideo={toggleVideo}
+        />
+      )}
 
       {selectedMedia && (
         <MediaViewer

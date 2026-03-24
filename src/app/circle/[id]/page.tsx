@@ -147,7 +147,7 @@ export default function CircleDetailPage() {
     loadUser();
   }, [id, router]);
 
-  // Hide navbar on scroll down (after threshold), show on scroll up (small delta), with debounce
+  // Hide navbar on scroll (single page scroll — same as Facebook web)
   useEffect(() => {
     const HIDE_THRESHOLD = 64;
     const SHOW_DELTA = 3;
@@ -190,18 +190,15 @@ export default function CircleDetailPage() {
       });
     };
 
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener("scroll", onScroll);
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
   }, [isNavHidden]);
 
   const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Close dropdowns when clicking outside
@@ -827,7 +824,7 @@ export default function CircleDetailPage() {
   }
 
   return (
-    <div className={styles.pageWrapper}>
+    <div className={`${styles.pageWrapper} ${isNavHidden ? styles.pageNavHidden : ""}`}>
       {/* Navigation Component */}
       <Navigation isHidden={isNavHidden} />
 
@@ -843,88 +840,83 @@ export default function CircleDetailPage() {
       )}
 
       {/* Main Content Container */}
-      <div className={styles.container}>
-
-      {/* Circle Hero Section */}
-      {circle && (
-        <div className={styles.circleHero}>
-          <div 
-            className={styles.circleCover}
-            style={{ backgroundImage: `url(${circle.cover_image || '/images/banner.png'})` }}
-          >
-            <div className={styles.coverOverlay}>
-              <div className={styles.circleHeaderContent}>
-                <div className={styles.circleTitleContainer}>
-                  <h1 className={styles.circleTitle}>{circle.name}</h1>
-                  <Link href="/circles" className={styles.backToCirclesBtn}>
-                    <i className="fas fa-arrow-left"></i> Back to Circles
-                  </Link>
-                </div>
-                <p className={styles.circleSubtitle}>
-                  <i className="fas fa-users"></i>
-                  {circle.member_count} members
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content Grid - Django Two Column Layout */}
+      <div className={`${styles.container} ${isNavHidden ? styles.containerNavHidden : ""}`}>
       {circle && (
         <div className={styles.circleInfoSection}>
-          {/* Left Sidebar - Circle Info (Django Structure) */}
-          <div className={styles.circleSidebar}>
-            <div className={styles.circleDescription}>
-              <p>{circle.description}</p>
-            </div>
-
-            {circle.rules && (
-              <div className={styles.circleRules}>
-                <strong>Community Guidelines</strong>
-                <ul>
-                  {circle.rules.split('\n').map((line, index) => (
-                    line.trim() && (
-                      <li key={index}>{line}</li>
-                    )
-                  ))}
-                </ul>
+          <div className={styles.circleLeftColumn}>
+          <div className={styles.circleHero}>
+            <div
+              className={styles.circleCover}
+              style={{ backgroundImage: `url(${circle.cover_image || '/images/banner.png'})` }}
+            >
+              <div className={styles.coverOverlay}>
+                <div className={styles.circleHeaderContent}>
+                  <div className={styles.circleTitleContainer}>
+                    <h1 className={styles.circleTitle}>{circle.name}</h1>
+                  </div>
+                  <div className={styles.circleMemberMeta} role="status">
+                    <span className={styles.memberCountIcon} aria-hidden>
+                      <i className="fas fa-users"></i>
+                    </span>
+                    <span className={styles.memberCountValue}>{circle.member_count.toLocaleString()}</span>
+                    <span className={styles.memberCountLabel}>members</span>
+                  </div>
+                </div>
               </div>
-            )}
-
-            <div className={styles.actionButtons}>
-              {circle.is_member ? (
-                <button 
-                  onClick={handleLeaveCircle}
-                  className={styles.actionBtn + ' ' + styles.btnLeave}
-                >
-                  <i className="fas fa-sign-out-alt"></i> Leave Circle
-                </button>
-              ) : (
-                <button 
-                  onClick={handleJoinCircle}
-                  className={styles.actionBtn + ' ' + styles.btnJoin}
-                >
-                  <i className="fas fa-sign-in-alt"></i> Join Circle
-                </button>
-              )}
-
-              {/* Admin Only: Manage Circle Button */}
-              {circle.is_admin && (
-                <Link href={`/circle/${id}/manage`} className={styles.actionBtn + ' ' + styles.btnManage}>
-                  <i className="fas fa-cog"></i> Manage Circle
-                </Link>
-              )}
-
-              <Link href={`/circle/${id}/moderation`} className={styles.moderationBtn}>
-                <i className="fas fa-shield-alt"></i> View Moderation History
-              </Link>
             </div>
           </div>
 
-          {/* Right Main Content - Posts & Events */}
-          <div className={`${styles.circleMainContent} ${isNavHidden ? styles.compactTop : ''}`}>
-            {/* Tabs: Posts | Events */}
+          <aside className={styles.circleSidebar}>
+            <div className={styles.circleSidebarInner}>
+              <div className={styles.circleDescription}>
+                <p>{circle.description}</p>
+              </div>
+
+              {circle.rules && (
+                <div className={styles.circleRules}>
+                  <strong>Community Guidelines</strong>
+                  <ul>
+                    {circle.rules.split('\n').map((line, index) => (
+                      line.trim() && (
+                        <li key={index}>{line}</li>
+                      )
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className={styles.actionButtons}>
+                {circle.is_member ? (
+                  <button
+                    onClick={handleLeaveCircle}
+                    className={styles.actionBtn + ' ' + styles.btnLeave}
+                  >
+                    <i className="fas fa-sign-out-alt"></i> Leave Circle
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleJoinCircle}
+                    className={styles.actionBtn + ' ' + styles.btnJoin}
+                  >
+                    <i className="fas fa-sign-in-alt"></i> Join Circle
+                  </button>
+                )}
+
+                {circle.is_admin && (
+                  <Link href={`/circle/${id}/manage`} className={styles.actionBtn + ' ' + styles.btnManage}>
+                    <i className="fas fa-cog"></i> Manage Circle
+                  </Link>
+                )}
+
+                <Link href={`/circle/${id}/moderation`} className={styles.moderationBtn}>
+                  <i className="fas fa-shield-alt"></i> View Moderation History
+                </Link>
+              </div>
+            </div>
+          </aside>
+          </div>
+
+          <div className={styles.circleMainContent}>
             <div className={styles.contentTabs}>
               <button
                 className={`${styles.tabBtn} ${activeTab === 'posts' ? styles.tabActive : ''}`}
@@ -940,29 +932,31 @@ export default function CircleDetailPage() {
               </button>
             </div>
 
-            <CircleTabs
-              activeTab={activeTab}
-              circle={circle}
-              currentUser={currentUser}
-              id={id}
-              showPostMenu={showPostMenu}
-              hiddenPosts={hiddenPosts}
-              convertToPostCardFormat={convertToPostCardFormat}
-              setShowCreatePost={setShowCreatePost}
-              setShowAddEvent={setShowAddEvent}
-              setShowPostMenu={setShowPostMenu}
-              setSelectedPost={setSelectedPost}
-              setShowViewPostModal={setShowViewPostModal}
-              setShowReportModal={setShowReportModal}
-              setHiddenPosts={setHiddenPosts}
-              handleEditPost={handleEditPost}
-              handleDeletePost={handleDeletePost}
-              handleLike={handleLike}
-              handleCommentAdded={handleCommentAdded}
-              handleJoinCircle={handleJoinCircle}
-              renderEventsTab={renderEventsTab}
-              styles={styles}
-            />
+            <div className={styles.circleMainScroll}>
+              <CircleTabs
+                activeTab={activeTab}
+                circle={circle}
+                currentUser={currentUser}
+                id={id}
+                showPostMenu={showPostMenu}
+                hiddenPosts={hiddenPosts}
+                convertToPostCardFormat={convertToPostCardFormat}
+                setShowCreatePost={setShowCreatePost}
+                setShowAddEvent={setShowAddEvent}
+                setShowPostMenu={setShowPostMenu}
+                setSelectedPost={setSelectedPost}
+                setShowViewPostModal={setShowViewPostModal}
+                setShowReportModal={setShowReportModal}
+                setHiddenPosts={setHiddenPosts}
+                handleEditPost={handleEditPost}
+                handleDeletePost={handleDeletePost}
+                handleLike={handleLike}
+                handleCommentAdded={handleCommentAdded}
+                handleJoinCircle={handleJoinCircle}
+                renderEventsTab={renderEventsTab}
+                styles={styles}
+              />
+            </div>
           </div>
         </div>
       )}

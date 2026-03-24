@@ -1,14 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ensureAuth, getSocket } from '@/utils/socketAuth';
+import { ensureAuth, getSocket, initSocketAuth } from '@/utils/socketAuth';
 import { getChatRooms, ChatRoom, createDM } from '@/utils/chatApi';
+import type { WebRTCSignal } from '@/types/webrtc';
 import Navigation from '@/components/Navigation';
 import ChatList from '@/components/ChatList';
 import ChatWindow from '@/components/ChatWindow';
 import CreateGroupModal from '@/components/CreateGroupModal';
 import styles from './chat.module.css';
+
+function normId(id: string | null | undefined): string {
+  if (id == null) return '';
+  return String(id).trim();
+}
 
 export default function ChatPage() {
   const router = useRouter();
@@ -20,6 +26,12 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [circleId, setCircleId] = useState<string | null>(null);
+  const [pendingOffer, setPendingOffer] = useState<WebRTCSignal | null>(null);
+
+  const roomsRef = useRef<ChatRoom[]>([]);
+  const selectedRoomRef = useRef<ChatRoom | null>(null);
+  roomsRef.current = rooms;
+  selectedRoomRef.current = selectedRoom;
 
   useEffect(() => {
     const circleParam = searchParams?.get('circle');
@@ -42,7 +54,7 @@ export default function ChatPage() {
     checkAuth();
   }, [router]);
 
-  const loadRooms = async () => {
+  const loadRooms = useCallback(async () => {
     if (!userId) return;
     try {
       const roomsData = await getChatRooms(userId, circleId || undefined);
@@ -52,7 +64,7 @@ export default function ChatPage() {
       console.error('Error loading rooms:', error);
       return [];
     }
-  };
+  }, [userId, circleId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -208,9 +220,41 @@ export default function ChatPage() {
     };
   }, [userId, selectedRoom]);
 
+  useEffect(() => {
+    if (!userId) return;
+    const socket = getSocket() ?? initSocketAuth();
+    const routeIncomingOffer = (data: WebRTCSignal) => {
+      if (!data || data.type !== 'offer') return;
+      if (normId(data.to) !== normId(userId)) return;
+      const list = roomsRef.current;
+      let room = list.find((r) => r.id === data.chatRoomId);
+      if (!room) {
+        void loadRooms().then((updated) => {
+          if (!updated?.length) return;
+          const r = updated.find((x) => x.id === data.chatRoomId);
+          if (r && selectedRoomRef.current?.id !== data.chatRoomId) {
+            setSelectedRoom(r);
+            setPendingOffer(data);
+          }
+        });
+        return;
+      }
+      if (selectedRoomRef.current?.id === data.chatRoomId) {
+        return;
+      }
+      setSelectedRoom(room);
+      setPendingOffer(data);
+    };
+    socket.on('webrtc_signal', routeIncomingOffer);
+    return () => {
+      socket.off('webrtc_signal', routeIncomingOffer);
+    };
+  }, [userId, loadRooms]);
+
   const handleRoomSelect = (room: ChatRoom) => {
     const fullRoom = rooms.find(r => r.id === room.id) || room;
     setSelectedRoom(fullRoom);
+    setPendingOffer(null);
     setRooms((prev) =>
       prev.map((r) => (r.id === room.id ? { ...r, unread_count: 0 } : r))
     );
@@ -275,6 +319,8 @@ export default function ChatPage() {
         userId={userId || ''}
         userData={userData}
         onRoomUpdate={handleRoomUpdated}
+        pendingOffer={pendingOffer}
+        onPendingOfferConsumed={() => setPendingOffer(null)}
       />
       {showCreateGroup && (
         <CreateGroupModal

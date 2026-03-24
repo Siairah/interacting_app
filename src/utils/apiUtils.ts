@@ -33,6 +33,16 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
 
 const BACKEND_URL = 'http://localhost:5001';
 
+/** True for typical LAN IPs used when opening the app as http://192.168.x.x:3000 from another device. */
+function isPrivateLanHostname(hostname: string): boolean {
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return false;
+  return (
+    /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.test(hostname) ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(hostname)
+  );
+}
+
 export function getApiUrl(): string {
   // Always use same-origin /api proxy in browser – Next.js rewrites to backend.
   // Avoids wrong-port errors when backend runs on different port during testing.
@@ -40,9 +50,22 @@ export function getApiUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL?.trim() || BACKEND_URL;
 }
 
-/** Real backend URL - use for WebSocket (socket.io) which cannot use HTTP proxy */
+/**
+ * Socket.IO must connect directly to the Node server (Next `/api` rewrites do not apply).
+ * If you open the app from another PC/phone via http://192.168.x.x:3000, using
+ * NEXT_PUBLIC_API_URL=http://localhost:5001 would make that device try *its own* localhost — calls never arrive.
+ * For LAN testing we default the socket host to the same hostname as the page + backend port.
+ */
 export function getBackendUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL?.trim() || BACKEND_URL;
+  const env = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (isPrivateLanHostname(host)) {
+      const port = process.env.NEXT_PUBLIC_SOCKET_PORT?.trim() || '5001';
+      return `http://${host}:${port}`;
+    }
+  }
+  return env || BACKEND_URL;
 }
 
 /** Fetch and parse JSON safely - use instead of fetch + response.json() */

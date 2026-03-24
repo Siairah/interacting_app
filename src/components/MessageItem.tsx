@@ -115,24 +115,30 @@ export default function MessageItem({
 
   if (message.message_type === 'call_log') {
     let callText = '';
-    switch (message.call_status) {
-      case 'missed':
-        callText = 'Missed call';
-        break;
-      case 'answered':
-        const duration = message.call_duration || 0;
-        const minutes = Math.floor(duration / 60);
-        const seconds = duration % 60;
-        callText = `Call ended – ${minutes}:${seconds.toString().padStart(2, '0')}`;
-        break;
-      case 'declined':
-        callText = 'Call declined';
-        break;
-      case 'cancelled':
-        callText = 'Call canceled before pickup';
-        break;
-      default:
-        callText = 'Call';
+    if (message.call_status === 'answered' && message.call_duration != null) {
+      const duration = message.call_duration;
+      const minutes = Math.floor(duration / 60);
+      const seconds = duration % 60;
+      callText = `Call ended – ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    } else if (message.content?.trim()) {
+      callText = message.content.trim();
+    } else {
+      switch (message.call_status) {
+        case 'missed':
+          callText = 'Missed call';
+          break;
+        case 'answered':
+          callText = 'Call ended';
+          break;
+        case 'declined':
+          callText = 'Call declined';
+          break;
+        case 'cancelled':
+          callText = 'Call canceled before pickup';
+          break;
+        default:
+          callText = 'Call';
+      }
     }
 
     return (

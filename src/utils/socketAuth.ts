@@ -16,6 +16,46 @@ function generateTabId(): string {
   return tabId;
 }
 
+/** One-time copy from legacy localStorage into this tab's session keys, then drop shared auth keys. */
+function migrateLegacyAuthIfNeeded(): void {
+  if (typeof window === 'undefined') return;
+  if (!currentTabId) {
+    currentTabId = generateTabId();
+  }
+  const tokenKey = `tab_auth_token_${currentTabId}`;
+  if (sessionStorage.getItem(tokenKey)) {
+    return;
+  }
+  const legacyToken = localStorage.getItem('auth_token');
+  if (!legacyToken) {
+    return;
+  }
+  sessionStorage.setItem(tokenKey, legacyToken);
+  const legacyUser = localStorage.getItem('user');
+  if (legacyUser) {
+    try {
+      const user = JSON.parse(legacyUser) as { id?: string; _id?: string };
+      const id = user.id || user._id;
+      if (id) {
+        sessionStorage.setItem(`tab_user_id_${currentTabId}`, String(id));
+        sessionStorage.setItem(`tab_user_data_${currentTabId}`, legacyUser);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('user');
+}
+
+function ensureTabSessionLoaded(): void {
+  if (typeof window === 'undefined') return;
+  if (!currentTabId) {
+    currentTabId = generateTabId();
+  }
+  migrateLegacyAuthIfNeeded();
+}
+
 export function initSocketAuth(): Socket {
   if (socketInstance && socketInstance.connected) {
     return socketInstance;
@@ -101,6 +141,9 @@ export function registerTabAuth(userId: string, token: string, userData?: any): 
       sessionStorage.setItem(`tab_user_data_${currentTabId}`, JSON.stringify(userData));
     }
 
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+
     if (socketInstance && socketInstance.connected && currentTabId) {
       socketInstance.emit('register_tab', {
         tabId: currentTabId,
@@ -183,20 +226,24 @@ export function updateTabAuth(userId: string, token: string): void {
     initSocketAuth();
   }
 
+  if (!currentTabId) {
+    currentTabId = generateTabId();
+  }
+  tabAuthToken = token;
+  tabUserId = userId;
+  sessionStorage.setItem(`tab_auth_token_${currentTabId}`, token);
+  sessionStorage.setItem(`tab_user_id_${currentTabId}`, userId);
+
   if (socketInstance) {
-    tabAuthToken = token;
-    tabUserId = userId;
-    
     socketInstance.emit('update_tab_auth', {
       userId,
       token,
     });
-
-    localStorage.setItem('auth_token', token);
   }
 }
 
 export function getTabAuthToken(): string | null {
+  ensureTabSessionLoaded();
   if (tabAuthToken) {
     return tabAuthToken;
   }
@@ -271,7 +318,7 @@ export function getAuthToken(): string | null {
   if (socketToken) {
     return socketToken;
   }
-  
+
   if (currentTabId) {
     const token = sessionStorage.getItem(`tab_auth_token_${currentTabId}`);
     if (token) {
@@ -279,16 +326,17 @@ export function getAuthToken(): string | null {
       return token;
     }
   }
-  
-  return localStorage.getItem('auth_token');
+
+  return null;
 }
 
 export function getUserId(): string | null {
+  ensureTabSessionLoaded();
   const socketUserId = getTabUserId();
   if (socketUserId) {
     return socketUserId;
   }
-  
+
   if (currentTabId) {
     const userId = sessionStorage.getItem(`tab_user_id_${currentTabId}`);
     if (userId) {
@@ -296,26 +344,17 @@ export function getUserId(): string | null {
       return userId;
     }
   }
-  
-  const userStr = localStorage.getItem('user');
-  if (userStr) {
-    try {
-      const user = JSON.parse(userStr);
-      return user.id || user._id || null;
-    } catch (e) {
-      console.error('Error parsing user:', e);
-    }
-  }
-  
+
   return null;
 }
 
 export function getUserData(): any | null {
+  ensureTabSessionLoaded();
   const socketUserData = getTabUserData();
   if (socketUserData) {
     return socketUserData;
   }
-  
+
   if (currentTabId) {
     const userStr = sessionStorage.getItem(`tab_user_data_${currentTabId}`);
     if (userStr) {
@@ -328,26 +367,18 @@ export function getUserData(): any | null {
       }
     }
   }
-  
-  const userStr = localStorage.getItem('user');
-  if (userStr) {
-    try {
-      return JSON.parse(userStr);
-    } catch (e) {
-      console.error('Error parsing user:', e);
-    }
-  }
-  
+
   return null;
 }
 
 export async function ensureAuth(): Promise<{ token: string | null; userId: string | null; userData: any | null }> {
   initSocketAuth();
-  
+
   if (!currentTabId) {
     currentTabId = generateTabId();
   }
-  
+  ensureTabSessionLoaded();
+
   const token = getAuthToken();
   const userId = getUserId();
   let userData = getUserData();

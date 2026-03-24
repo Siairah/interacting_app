@@ -1,99 +1,104 @@
 .messageInputContainer {
   display: flex;
-  align-items: center;
-  padding: 15px 20px;
-  background-color: #fff;
-  border-top: 1px solid #e9ecef;
-}
-
-.inputActionBtn {
-  background: none;
-  border: none;
-  color: #8d99ae;
-  font-size: 1.2rem;
-  margin-right: 10px;
-  cursor: pointer;
-  transition: color 0.2s;
-  padding: 8px;
-  border-radius: 8px;
-}
-
-.inputActionBtn:hover {
-  color: #6a14eb;
+  align-items: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem clamp(0.75rem, 2vw, 1.25rem) calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  background: #fff;
+  border-top: 1px solid rgba(102, 126, 234, 0.12);
+  flex-shrink: 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .inputWrapper {
   flex: 1;
   position: relative;
+  min-width: 0;
 }
 
 .messageInput {
   width: 100%;
-  padding: 12px 45px 12px 15px;
-  border-radius: 8px;
-  border: 1px solid #ced4da;
+  padding: 0.7rem 1rem;
+  border-radius: 22px;
+  border: 1px solid #e2e8f0;
   font-size: 0.95rem;
-  transition: all 0.2s;
-  resize: none;
-  max-height: 120px;
+  line-height: 1.4;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+.messageInput::placeholder {
+  color: #94a3b8;
 }
 
 .messageInput:focus {
   outline: none;
-  border-color: #6a14eb;
-  box-shadow: 0 0 0 2px rgba(106, 20, 235, 0.1);
+  border-color: #667eea;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
 }
 
-.emojiBtn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
+.inputActionBtn {
+  background: rgba(102, 126, 234, 0.08);
   border: none;
-  color: #8d99ae;
-  font-size: 1.2rem;
+  color: #667eea;
+  font-size: 1.15rem;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: background 0.2s, transform 0.15s;
+  padding: 0.55rem;
+  border-radius: 12px;
+  flex-shrink: 0;
 }
 
-.emojiBtn:hover {
-  color: #6a14eb;
+.inputActionBtn:hover {
+  background: rgba(102, 126, 234, 0.16);
+}
+
+.inputActionBtn:active {
+  transform: scale(0.96);
 }
 
 .selectedFile {
-  font-size: 0.85rem;
-  color: #6a14eb;
-  margin-right: 10px;
-  max-width: 150px;
+  font-size: 0.75rem;
+  color: #667eea;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  align-self: center;
 }
 
 .sendBtn {
-  background-color: #6a14eb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
-  margin-left: 10px;
+  transition: transform 0.15s, box-shadow 0.2s;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
 }
 
 .sendBtn:hover {
-  background-color: #3f37c9;
-  transform: scale(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.45);
+}
+
+.sendBtn:active {
+  transform: translateY(0);
 }
 
 .sendBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .hiddenFileInput {
@@ -110,10 +115,10 @@
   left: 0;
   margin-bottom: 10px;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   padding: 8px 0;
-  min-width: 150px;
+  min-width: 160px;
   z-index: 1000;
   animation: slideUp 0.2s ease-out;
 }
@@ -121,7 +126,7 @@
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -132,23 +137,22 @@
 .menuItem {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
+  padding: 12px 18px;
   cursor: pointer;
-  transition: background-color 0.2s;
-  color: #333;
+  transition: background-color 0.15s;
+  color: #334155;
 }
 
 .menuItem:hover {
-  background-color: #f8f9fa;
+  background-color: #f1f5f9;
 }
 
 .menuItem i {
   margin-right: 12px;
   width: 20px;
-  color: #6a14eb;
+  color: #667eea;
 }
 
 .menuItem span {
   font-size: 0.95rem;
 }
-

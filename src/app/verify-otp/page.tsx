@@ -1,11 +1,11 @@
 "use client";
 
 import Head from 'next/head';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './verify-otp.module.css';
 
-export default function VerifyOtp() {
+function VerifyOtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = useMemo(() => (searchParams?.get('email') || '').toLowerCase().trim(), [searchParams]);
@@ -178,4 +178,11 @@ export default function VerifyOtp() {
   );
 }
 
+export default function VerifyOtp() {
+  return (
+    <Suspense fallback={<div className={styles['otp-page']}>Loading…</div>}>
+      <VerifyOtpContent />
+    </Suspense>
+  );
+}
 

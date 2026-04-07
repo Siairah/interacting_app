@@ -50,7 +50,8 @@ export function useCallRingtone(mode: RingMode) {
       osc.stop(t + durSec + 0.02);
     };
 
-    let intervalId: ReturnType<typeof setInterval> | undefined;
+    // Browser timers are numeric IDs; Node typings use `Timeout` — use `number` here.
+    let intervalId: number | undefined;
     const timeouts: number[] = [];
 
     if (mode === 'incoming') {

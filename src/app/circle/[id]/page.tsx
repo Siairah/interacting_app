@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navigation from "@/components/Navigation";
@@ -73,7 +73,7 @@ interface CircleEvent {
   user_has_reserved: boolean;
 }
 
-export default function CircleDetailPage() {
+function CircleDetailPageContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1231,5 +1231,17 @@ export default function CircleDetailPage() {
       )}
       </div>
     </div>
+  );
+}
+
+export default function CircleDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className={styles.loadingContainer}>Loading…</div>
+      }
+    >
+      <CircleDetailPageContent />
+    </Suspense>
   );
 }

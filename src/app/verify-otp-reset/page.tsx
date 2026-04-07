@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import styles from "./verify-otp-reset.module.css";
 
-export default function VerifyOtpResetPage() {
+function VerifyOtpResetPageContent() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -226,5 +226,13 @@ export default function VerifyOtpResetPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function VerifyOtpResetPage() {
+  return (
+    <Suspense fallback={<div className={styles.verifyOtpCenter}>Loading…</div>}>
+      <VerifyOtpResetPageContent />
+    </Suspense>
   );
 }

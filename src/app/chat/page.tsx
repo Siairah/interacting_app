@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ensureAuth, getSocket, initSocketAuth } from '@/utils/socketAuth';
 import { getChatRooms, ChatRoom, createDM } from '@/utils/chatApi';
@@ -16,7 +16,7 @@ function normId(id: string | null | undefined): string {
   return String(id).trim();
 }
 
-export default function ChatPage() {
+function ChatPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [userId, setUserId] = useState<string | null>(null);
@@ -407,3 +407,19 @@ export default function ChatPage() {
   );
 }
 
+export default function ChatPage() {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <Navigation />
+          <div className={styles.loadingContainer}>
+            <div className={styles.loader}>Loading...</div>
+          </div>
+        </>
+      }
+    >
+      <ChatPageContent />
+    </Suspense>
+  );
+}

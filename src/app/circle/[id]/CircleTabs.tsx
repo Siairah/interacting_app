@@ -40,8 +40,8 @@ interface CircleTabsProps {
 }
 
 export default function CircleTabs(props: CircleTabsProps) {
-  const { activeTab, circle, currentUser, id, showPostMenu, hiddenPosts,
-    convertToPostCardFormat, setShowCreatePost, setShowAddEvent, setShowPostMenu,
+  const { activeTab, circle, currentUser, id, showPostMenu, hiddenPosts: _hiddenPosts,
+    convertToPostCardFormat, setShowCreatePost, setShowAddEvent: _setShowAddEvent, setShowPostMenu,
     setSelectedPost, setShowViewPostModal, setShowReportModal, setHiddenPosts, handleEditPost, handleDeletePost,
     handleLike, handleCommentAdded, handleJoinCircle, renderEventsTab, styles } = props;
 

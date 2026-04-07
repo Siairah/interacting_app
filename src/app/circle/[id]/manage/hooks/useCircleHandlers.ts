@@ -1,5 +1,4 @@
 // Toast notifications are imported dynamically in each handler to avoid circular dependencies
-import type { Circle } from '../types';
 import { getApiUrl } from '@/utils/apiUtils';
 
 export function useCircleHandlers(

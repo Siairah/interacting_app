@@ -122,7 +122,7 @@ export function initSocketAuth(): Socket {
 }
 
 export function registerTabAuth(userId: string, token: string, userData?: any): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     if (!socketInstance) {
       initSocketAuth();
     }

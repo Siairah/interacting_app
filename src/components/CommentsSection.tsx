@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { PostComment } from './types';
 import CommentItem from './CommentItem';
 import styles from './CommentsSection.module.css';
@@ -232,7 +233,7 @@ export default function CommentsSection({
         </div>
       ) : (
         <div className={styles.loginPrompt}>
-          <p>Please <a href="/">login</a> to comment</p>
+          <p>Please <Link href="/">login</Link> to comment</p>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "./signup.module.css";
 
@@ -22,7 +23,7 @@ export default function Signup() {
     
     checkAuth();
   }, [router]);
-  const [step, setStep] = useState<SignupStep>("register");
+  const [_step, _setStep] = useState<SignupStep>("register");
   const [showPasswords, setShowPasswords] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,15 +32,15 @@ export default function Signup() {
     password: "",
     confirmPassword: ""
   });
-  const [otp, setOtp] = useState("");
-  const [verifiedOtp, setVerifiedOtp] = useState("");
-  const [profileData, setProfileData] = useState({
+  const [_otp, _setOtp] = useState("");
+  const [_verifiedOtp, _setVerifiedOtp] = useState("");
+  const [_profileData, _setProfileData] = useState({
     fullName: "",
     username: "",
     bio: "",
     interests: ""
   });
-  const [otpTimer, setOtpTimer] = useState(300);
+  const [_otpTimer, _setOtpTimer] = useState(300);
   const [toast, setToast] = useState<{ type: string; message: string } | null>(
     null
   );
@@ -124,7 +125,7 @@ export default function Signup() {
         const text = await response.text();
         console.error('Response text:', text);
         const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
-        const sanitizedText = sanitizeErrorMessage(text);
+        const _sanitizedText = sanitizeErrorMessage(text);
         return false;
       }
       
@@ -371,7 +372,7 @@ export default function Signup() {
           </div>
           
           <div className={styles.signinLink}>
-            Already have an account? <a href="/">Sign In</a>
+            Already have an account? <Link href="/">Sign In</Link>
           </div>
         </div>
       </div>

@@ -104,7 +104,7 @@ function ChatPageContent() {
 
     const interval = setInterval(loadRooms, 30000);
     return () => clearInterval(interval);
-  }, [userId, circleId, searchParams, router]);
+  }, [userId, circleId, searchParams, router, loadRooms]);
 
   const applyPresenceToRoom = useCallback(
     (room: ChatRoom): ChatRoom => {
@@ -293,7 +293,7 @@ function ChatPageContent() {
       if (!data || data.type !== 'offer') return;
       if (normId(data.to) !== normId(userId)) return;
       const list = roomsRef.current;
-      let room = list.find((r) => r.id === data.chatRoomId);
+      const room = list.find((r) => r.id === data.chatRoomId);
       if (!room) {
         void loadRooms().then((updated) => {
           if (!updated?.length) return;
@@ -339,16 +339,6 @@ function ChatPageContent() {
     if (selectedRoom?.id === updatedRoom.id) {
       setSelectedRoom(updatedRoom);
     }
-  };
-
-  const handleGroupLeft = () => {
-    setSelectedRoom(null);
-    loadRooms();
-  };
-
-  const handleGroupDeleted = () => {
-    setSelectedRoom(null);
-    loadRooms();
   };
 
   if (loading) {

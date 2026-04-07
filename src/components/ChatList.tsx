@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ChatRoom } from '@/utils/chatApi';
 import styles from './ChatList.module.css';
 

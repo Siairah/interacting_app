@@ -69,7 +69,7 @@ export default function MessageItem({
     return { isSeen: seenByRecipients.length > 0, showDouble: seenByRecipients.length > 0 };
   };
 
-  const { isSeen, showDouble } = getSeenStatus();
+  const { isSeen: _isSeen, showDouble } = getSeenStatus();
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);

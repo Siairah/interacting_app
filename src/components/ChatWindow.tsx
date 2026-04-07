@@ -24,7 +24,7 @@ interface ChatWindowProps {
 export default function ChatWindow({
   room,
   userId,
-  userData,
+  userData: _userData,
   onRoomUpdate,
   pendingOffer,
   onPendingOfferConsumed,

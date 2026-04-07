@@ -1,4 +1,4 @@
-import type { PendingRequest, Member, PendingPost, FlaggedPost, ReportedPost, RestrictedUser, BannedUser } from '../types';
+import type { PendingRequest, Member, ReportedPost, RestrictedUser, BannedUser } from '../types';
 import styles from '../manage.module.css';
 
 type TabType = 'overview' | 'requests' | 'members' | 'posts' | 'flagged' | 'reports' | 'restricted' | 'banned';

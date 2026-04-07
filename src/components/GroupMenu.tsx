@@ -72,7 +72,7 @@ export default function GroupMenu({
           } else {
             setIsCircleAdminState(false);
           }
-        } catch (error) {
+        } catch (_error) {
           setIsCircleAdminState(false);
         }
       } else {

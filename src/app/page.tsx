@@ -82,7 +82,7 @@ function LoginPageContent() {
 
       // Initialize Socket.IO and register this tab's authentication
       const { initSocketAuth, registerTabAuth } = await import('@/utils/socketAuth');
-      const socket = initSocketAuth();
+      initSocketAuth();
       
       // Register tab with Socket.IO (this also sets sessionStorage synchronously)
       // Wait a bit for registration to complete

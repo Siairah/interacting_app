@@ -4,10 +4,8 @@ import { useEffect, useState, useRef, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navigation from "@/components/Navigation";
-import PostCard from "@/components/PostCard";
 import ReportPostModal from "@/components/ReportPostModal";
 import ViewPostModal from "@/components/ViewPostModal";
-import WarningsBanner from "@/components/WarningsBanner";
 import CircleTabs from "./CircleTabs";
 import { Post } from "@/components/types";
 import styles from "./circle.module.css";
@@ -87,7 +85,6 @@ function CircleDetailPageContent() {
   const [postMedia, setPostMedia] = useState<File[]>([]);
   const [creating, setCreating] = useState(false);
   const [showPostMenu, setShowPostMenu] = useState<string | null>(null);
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showViewPostModal, setShowViewPostModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -789,17 +786,6 @@ function CircleDetailPageContent() {
       )}
     </div>
   );
-
-  const getTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return `${diffInSeconds}s`;
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
-    return `${Math.floor(diffInSeconds / 86400)}d`;
-  };
 
   if (loading) {
     return (

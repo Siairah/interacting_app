@@ -17,7 +17,7 @@ interface MembersTabProps {
 
 export default function MembersTab({
   members,
-  adminCount,
+  adminCount: _adminCount,
   circleCreatorUserId,
   currentUserId,
   onPromoteAdmin,

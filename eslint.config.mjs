@@ -27,6 +27,19 @@ const eslintConfig = [
       "react/no-unescaped-entities": "off",
       "@next/next/no-html-link-for-pages": "warn",
       "prefer-const": "warn",
+      // Large codebase: migrating every <img> to next/image needs domains/sizes per URL.
+      "@next/next/no-img-element": "off",
+      // Intentionally omitted deps are common (socket subscriptions, mount-only effects).
+      "react-hooks/exhaustive-deps": "off",
+      "@next/next/no-page-custom-font": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
     },
   },
 ];

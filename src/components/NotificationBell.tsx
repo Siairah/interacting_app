@@ -68,7 +68,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
 
     // Initialize socket and setup listener
     const initializeSocketAndListener = async (): Promise<(() => void) | undefined> => {
-      const { initSocketAuth, getSocket, ensureAuth } = await import('@/utils/socketAuth');
+      const { initSocketAuth, getSocket } = await import('@/utils/socketAuth');
       
       // Ensure socket is initialized
       initSocketAuth();

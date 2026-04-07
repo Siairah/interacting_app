@@ -7,7 +7,7 @@ import styles from './profile-setup.module.css';
 
 export default function ProfileSetup() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [_email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('O'); // Default to 'Other'
@@ -229,7 +229,7 @@ export default function ProfileSetup() {
         if (loginData.success) {
           // Register tab authentication with Socket.IO (tab-specific)
           const { initSocketAuth, registerTabAuth } = await import('@/utils/socketAuth');
-          const socket = initSocketAuth();
+          initSocketAuth();
           
           // Register tab with Socket.IO (don't await - background process)
           registerTabAuth(loginData.user.id, loginData.token, loginData.user).catch(err => {

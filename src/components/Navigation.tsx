@@ -22,7 +22,7 @@ interface NavigationProps {
 export default function Navigation({ isHidden = false }: NavigationProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [_user, setUser] = useState<UserProfile | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
@@ -76,7 +76,7 @@ export default function Navigation({ isHidden = false }: NavigationProps) {
       }
     };
 
-    const handleUnreadUpdate = (data: { room_id: string; unread_count: number }) => {
+    const handleUnreadUpdate = (_data: { room_id: string; unread_count: number }) => {
       loadUnreadCount();
     };
 

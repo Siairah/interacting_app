@@ -108,7 +108,7 @@ export default function PostDetailPage() {
       // Get user ID - check both 'user_id' and 'user' object
       // Get user ID (Socket.IO first, then fallback)
       const { getUserId } = await import('@/utils/socketAuth');
-      let user_id = getUserId();
+      const user_id = getUserId();
       
       // Use Socket.IO token for API call
       const { getAuthToken } = await import('@/utils/socketAuth');

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Post } from './types';
 import PostHeader from './PostHeader';
 import PostMedia from './PostMedia';
@@ -28,7 +27,6 @@ export default function PostCard({
   className = '',
   customOptionsMenu
 }: PostCardProps) {
-  const router = useRouter();
   const [showLikersModal, setShowLikersModal] = useState(false);
   const [showCommentModal, setShowCommentModal] = useState(false);
 

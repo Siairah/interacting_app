@@ -5,10 +5,10 @@ import { ChatMessage } from '@/utils/chatApi';
 
 export function useChatSocket(roomId: string | null, userId?: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isTyping, setIsTyping] = useState(false);
-  const [typingUser, setTypingUser] = useState<string>('');
+  const [isTyping, _setIsTyping] = useState(false);
+  const [typingUser, _setTypingUser] = useState<string>('');
   const socketRef = useRef<Socket | null>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const _typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!roomId) return;
@@ -116,7 +116,7 @@ export function useChatSocket(roomId: string | null, userId?: string) {
 
   const sendMessage = useCallback((message: ChatMessage) => {
     if (socketRef.current && roomId) {
-      const { room, ...messageWithoutRoom } = message;
+      const { room: _room, ...messageWithoutRoom } = message;
       socketRef.current.emit('send_message', {
         room: roomId,
         ...messageWithoutRoom,

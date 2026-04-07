@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import ToastContainer from '@/components/ToastContainer';
@@ -24,7 +24,6 @@ type TabType = 'overview' | 'requests' | 'members' | 'posts' | 'flagged' | 'repo
 
 export default function ManageCirclePage() {
   const params = useParams();
-  const router = useRouter();
   const circleId = params.id as string;
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');

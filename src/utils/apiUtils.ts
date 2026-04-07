@@ -1,3 +1,5 @@
+import { getDefaultApiBaseUrl } from '@/config/api';
+
 /** User-friendly message when backend returns HTML (wrong port, 404, etc.) */
 export const API_UNREACHABLE_MSG = 'Backend not reachable. Check NEXT_PUBLIC_API_URL in .env.local and restart.';
 
@@ -31,7 +33,9 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-const BACKEND_URL = 'http://localhost:5001';
+function resolveApiBase(): string {
+  return process.env.NEXT_PUBLIC_API_URL?.trim() || getDefaultApiBaseUrl();
+}
 
 /** True for typical LAN IPs used when opening the app as http://192.168.x.x:3000 from another device. */
 function isPrivateLanHostname(hostname: string): boolean {
@@ -47,7 +51,7 @@ export function getApiUrl(): string {
   // Always use same-origin /api proxy in browser – Next.js rewrites to backend.
   // Avoids wrong-port errors when backend runs on different port during testing.
   if (typeof window !== 'undefined') return '/api';
-  return process.env.NEXT_PUBLIC_API_URL?.trim() || BACKEND_URL;
+  return resolveApiBase();
 }
 
 /**
@@ -57,7 +61,6 @@ export function getApiUrl(): string {
  * For LAN testing we default the socket host to the same hostname as the page + backend port.
  */
 export function getBackendUrl(): string {
-  const env = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (isPrivateLanHostname(host)) {
@@ -65,7 +68,7 @@ export function getBackendUrl(): string {
       return `http://${host}:${port}`;
     }
   }
-  return env || BACKEND_URL;
+  return resolveApiBase();
 }
 
 /** Fetch and parse JSON safely - use instead of fetch + response.json() */

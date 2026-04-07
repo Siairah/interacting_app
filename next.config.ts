@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
+import { getDefaultApiBaseUrl } from "./src/config/api";
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:5001';
+const apiUrl =
+  process.env.NEXT_PUBLIC_API_URL?.trim() || getDefaultApiBaseUrl();
 
 const nextConfig: NextConfig = {
   async rewrites() {

@@ -1193,7 +1193,7 @@
     }
     
     .feedSection {
-        padding: 10px 10px 80px; /* space for bottom nav */
+        padding: 12px var(--page-pad-x, 12px) var(--app-mobile-nav-pad, calc(68px + env(safe-area-inset-bottom, 0px)));
     }
     
     .postCard,
@@ -1202,8 +1202,8 @@
     }
 
     .scrollToTopBtn {
-        bottom: 80px; /* sit above bottom nav */
-        right: 20px;
+        bottom: calc(var(--app-mobile-nav-height, 68px) + env(safe-area-inset-bottom, 0px) + 12px);
+        right: max(16px, env(safe-area-inset-right, 0px));
     }
 
     .postMedia {

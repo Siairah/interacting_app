@@ -301,8 +301,24 @@
 @media (max-width: 768px) {
   .container {
     margin-top: 0;
-    padding: 10px 10px 80px; /* space for bottom nav - Match Dashboard */
+    padding: 12px var(--page-pad-x, 12px) var(--app-mobile-nav-pad, calc(68px + env(safe-area-inset-bottom, 0px)));
     min-height: auto;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+  }
+
+  .pageTitle {
+    font-size: clamp(1.35rem, 5vw, 1.75rem);
+  }
+
+  .pageSubtitle {
+    font-size: 0.95rem;
   }
 }
 

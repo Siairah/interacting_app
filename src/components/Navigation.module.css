@@ -174,6 +174,7 @@
     padding: 10px 0;
     margin-top: 8px;
     min-width: 200px;
+    max-width: min(280px, calc(100vw - 24px));
     z-index: 1001;
     animation: dropdownSlide 0.3s ease-out;
 }
@@ -235,7 +236,9 @@
     .navLink {
         flex-direction: row;
         justify-content: center;
-        min-width: auto;
+        align-items: center;
+        min-width: 44px;
+        min-height: 44px;
         padding: 8px 10px;
     }
     
@@ -251,6 +254,7 @@
         top: auto;
         bottom: 0;
         padding: 6px 0;
+        padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
     }
 
     /* Hide brand on compact bottom nav */

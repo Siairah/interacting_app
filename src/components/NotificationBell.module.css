@@ -15,8 +15,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
 }
 
 .bellButton:hover {
@@ -191,15 +193,22 @@
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .dropdown {
-    width: 320px;
-    right: -50px;
+    width: min(380px, calc(100vw - 24px));
+    right: 0;
+    left: auto;
+    max-height: min(480px, 70dvh);
   }
 }
 
 @media (max-width: 480px) {
   .dropdown {
-    width: calc(100vw - 2rem);
-    right: -100px;
+    width: calc(100vw - 16px);
+    max-width: 400px;
+    right: max(-8px, calc(env(safe-area-inset-right, 0px) - 8px));
+  }
+
+  .notificationsList {
+    max-height: min(360px, 55dvh);
   }
 }
 

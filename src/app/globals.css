@@ -1,5 +1,11 @@
 /* CSS Variables for Theming (Dark Mode Ready) */
 :root {
+  /* Layout: mobile bottom nav (matches Navigation ~64–72px + home indicator) */
+  --app-mobile-nav-height: 68px;
+  --app-mobile-nav-pad: calc(var(--app-mobile-nav-height) + env(safe-area-inset-bottom, 0px));
+  --page-pad-x: clamp(12px, 4vw, 24px);
+  --page-pad-y: clamp(12px, 3vw, 24px);
+
   /* Primary Colors */
   --primary-color: #667eea;
   --primary-hover: #5649c0;
@@ -164,6 +170,13 @@ img[loading="lazy"] {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     scroll-behavior: smooth;
+  }
+
+  /* iOS: avoid auto-zoom on focus; keep typography readable */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: max(16px, 1rem);
   }
 }
 

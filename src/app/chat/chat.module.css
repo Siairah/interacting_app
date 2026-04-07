@@ -21,7 +21,7 @@
   .messengerApp {
     flex-direction: column;
     margin-top: 0;
-    height: calc(100dvh - 80px);
+    height: calc(100dvh - var(--app-mobile-nav-height, 68px) - env(safe-area-inset-bottom, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
     border-radius: 0;
     border: none;

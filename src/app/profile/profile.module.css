@@ -1063,9 +1063,13 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .profileWrapper {
+    padding-bottom: var(--app-mobile-nav-pad, calc(68px + env(safe-area-inset-bottom, 0px)));
+  }
+
   .container {
-    margin: 70px auto 20px;
-    padding: 0 10px;
+    margin: 1rem auto 1.25rem;
+    padding: 0 var(--page-pad-x, 12px);
   }
 
   .profileAvatar {
@@ -1111,6 +1115,16 @@
   .navIconBtn {
     width: 36px;
     height: 36px;
+  }
+
+  .profileHeader {
+    padding: 1.75rem 1.25rem;
+    border-radius: 16px;
+  }
+
+  .mediaGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
   }
 
   .navIconBtn i {

@@ -175,20 +175,16 @@ export function useWebRTCCall(
     [emitSignal, peerUserId, selfUserId]
   );
 
-  const attachPeer = useCallback(
-    (stream: MediaStream) => {
-      const pc = new RTCPeerConnection(ICE_SERVERS);
-      pcRef.current = pc;
-      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
-      pc.onicecandidate = onIceCandidate;
-      pc.ontrack = (ev) => {
-        // Some browsers (incl. Chrome w/ Unified Plan) fire ontrack with ev.track set but streams[] empty.
-        let incoming: MediaStream | null = ev.streams[0] ?? null;
-        if (!incoming && ev.track) {
-          incoming = new MediaStream();
-          incoming.addTrack(ev.track);
-        }
-        if (!incoming) return;
+  const bindRemoteTracks = useCallback((pc: RTCPeerConnection) => {
+    pc.ontrack = (ev) => {
+      // Some browsers fire ontrack with ev.streams[0] empty.
+      let incoming: MediaStream | null = ev.streams[0] ?? null;
+      if (!incoming && ev.track) {
+        incoming = new MediaStream();
+        incoming.addTrack(ev.track);
+      }
+      if (!incoming) return;
+      const mergeIn = () => {
         setRemoteStream((prev) => {
           if (!prev) return incoming as MediaStream;
           const merged = new MediaStream();
@@ -200,8 +196,21 @@ export function useWebRTCCall(
           return merged;
         });
       };
+      mergeIn();
+      ev.track.addEventListener('unmute', mergeIn);
+    };
+  }, []);
+
+  /** Caller: add local tracks, then createOffer. */
+  const attachPeerCaller = useCallback(
+    (stream: MediaStream) => {
+      const pc = new RTCPeerConnection(ICE_SERVERS);
+      pcRef.current = pc;
+      bindRemoteTracks(pc);
+      pc.onicecandidate = onIceCandidate;
+      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
     },
-    [onIceCandidate]
+    [bindRemoteTracks, onIceCandidate]
   );
 
   const startCall = useCallback(
@@ -226,7 +235,7 @@ export function useWebRTCCall(
         const callId = newCallId();
         callIdRef.current = callId;
         roleRef.current = 'caller';
-        attachPeer(stream);
+        attachPeerCaller(stream);
         const pc = pcRef.current!;
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -247,7 +256,7 @@ export function useWebRTCCall(
         setUiState('idle');
       }
     },
-    [attachPeer, chatRoomId, cleanupMedia, emitSignal, enabled, peerUserId, selfUserId]
+    [attachPeerCaller, chatRoomId, cleanupMedia, emitSignal, enabled, peerUserId, selfUserId]
   );
 
   const acceptIncoming = useCallback(async () => {
@@ -272,12 +281,21 @@ export function useWebRTCCall(
       setLocalStream(stream);
       callIdRef.current = offer.callId;
       roleRef.current = 'callee';
-      attachPeer(stream);
-      const pc = pcRef.current!;
+
+      const pc = new RTCPeerConnection(ICE_SERVERS);
+      pcRef.current = pc;
+      bindRemoteTracks(pc);
+      pc.onicecandidate = onIceCandidate;
+
       await pc.setRemoteDescription(new RTCSessionDescription(offer.sdp));
       await flushPendingIce();
+
+      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
+      await flushPendingIce();
+
       setUiState('connecting');
       emitSignal({
         type: 'answer',
@@ -295,7 +313,16 @@ export function useWebRTCCall(
       setError('Could not answer the call.');
       endCall(true);
     }
-  }, [attachPeer, chatRoomId, emitSignal, endCall, flushPendingIce, peerUserId, selfUserId]);
+  }, [
+    bindRemoteTracks,
+    chatRoomId,
+    emitSignal,
+    endCall,
+    flushPendingIce,
+    onIceCandidate,
+    peerUserId,
+    selfUserId,
+  ]);
 
   const rejectIncoming = useCallback(() => {
     const offer = pendingOfferRef.current;

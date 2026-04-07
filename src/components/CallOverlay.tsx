@@ -77,7 +77,8 @@ export default function CallOverlay({
     const unmuteHandlers: Array<{ t: MediaStreamTrack; fn: () => void }> = [];
 
     if (v) {
-      v.srcObject = vTracks.length ? new MediaStream(vTracks) : null;
+      // Bind full stream so audio+video stay in sync; muted on <video> avoids echo (audio uses <audio> below).
+      v.srcObject = remoteStream && vTracks.length ? remoteStream : null;
       void v.play().catch(() => {});
       const replay = () => void v.play().catch(() => {});
       vTracks.forEach((t) => {
@@ -114,10 +115,8 @@ export default function CallOverlay({
 
   const hasLocalVideoTrack = (localStream?.getVideoTracks().length ?? 0) > 0;
   const remoteVideoTracks = remoteStream?.getVideoTracks() ?? [];
-  // Don't require readyState === 'live' (briefly 'new') or unmute — avoids covering the remote <video> with the placeholder.
-  const remoteHasRenderableVideo =
-    remoteVideoTracks.length > 0 &&
-    remoteVideoTracks.some((t) => t.readyState !== 'ended' && t.enabled);
+  // Show main video as soon as a remote video track exists; don't require `enabled` (can flicker before first frame).
+  const remoteHasRenderableVideo = remoteVideoTracks.some((t) => t.readyState !== 'ended');
   const remotePlaceholderText = !remoteStream ? 'Connecting…' : 'Camera is off';
 
   return (

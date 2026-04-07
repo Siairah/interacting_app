@@ -11,6 +11,95 @@
   min-height: fit-content;
 }
 
+/* View Post modal: fill remaining space; list scrolls; form stays at bottom */
+.commentsSectionModal {
+  flex: 1;
+  min-height: 0;
+  padding: 0 16px 12px;
+  overflow: hidden;
+}
+
+/* CommentModal: no duplicate "Comments" sub-heading */
+.commentsSectionModalCompact {
+  padding-top: 4px;
+}
+
+.commentsHeaderModal {
+  flex-shrink: 0;
+  padding: 12px 4px 10px;
+  margin-bottom: 0;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.commentsHeaderModal h5 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #212529;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.commentsHeaderModal h5 i {
+  color: #667eea;
+  font-size: 18px;
+}
+
+.commentsMainArea {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+}
+
+.commentsMainArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.commentsMainArea::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.commentListModal {
+  flex: 1;
+  min-height: 0;
+  margin-bottom: 8px;
+  padding-right: 4px;
+}
+
+.commentsSectionModal .loadingComments,
+.commentsSectionModal .emptyComments {
+  flex: 1;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+}
+
+.commentFormModal {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 12px;
+  padding-bottom: 4px;
+  border-top: 2px solid #e9ecef;
+  background: #ffffff;
+}
+
+.commentsSectionModal .loginPrompt {
+  flex-shrink: 0;
+  margin-top: auto;
+  border-top: 2px solid #e9ecef;
+  padding-top: 14px;
+}
+
 .commentsHeader {
   display: flex;
   align-items: center;

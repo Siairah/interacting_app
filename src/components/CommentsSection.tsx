@@ -13,6 +13,8 @@ interface CommentsSectionProps {
   initialShowLimit?: number;
   isLoading?: boolean;
   isInModal?: boolean;
+  /** When false, modal does not render the extra "Comments" row (e.g. CommentModal already has a title). */
+  showCommentsHeadingInModal?: boolean;
 }
 
 export default function CommentsSection({
@@ -22,7 +24,8 @@ export default function CommentsSection({
   onCommentAdded,
   initialShowLimit = 10,
   isLoading = false,
-  isInModal = false
+  isInModal = false,
+  showCommentsHeadingInModal = true,
 }: CommentsSectionProps) {
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -104,8 +107,63 @@ export default function CommentsSection({
     commentInputRef.current?.focus();
   };
 
+  const commentsMiddle = (
+    <>
+      {isLoading ? (
+        <div className={styles.loadingComments}>
+          <i className="fas fa-spinner fa-spin"></i>
+          <p>Loading comments...</p>
+        </div>
+      ) : safeComments.length === 0 ? (
+        <div className={styles.emptyComments}>
+          <i className="fas fa-comment-slash"></i>
+          <p>No comments yet. Be the first to comment!</p>
+        </div>
+      ) : (
+        <>
+          <div
+            className={isInModal ? styles.commentListModal : styles.commentList}
+          >
+            {visibleComments.map((comment) => (
+              <CommentItem key={comment.id} comment={comment} />
+            ))}
+            <div ref={commentsEndRef} />
+          </div>
+
+          {hasMoreComments && !showMoreComments && (
+            <div className={styles.moreCommentsContainer}>
+              <button
+                type="button"
+                className={styles.moreCommentsBtn}
+                onClick={() => setShowMoreComments(true)}
+              >
+                <i className="fas fa-chevron-down"></i> View {safeComments.length - initialShowLimit}{' '}
+                More Comments
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+
   return (
-    <div className={styles.commentsSection}>
+    <div
+      className={`${styles.commentsSection} ${isInModal ? styles.commentsSectionModal : ''} ${
+        isInModal && !showCommentsHeadingInModal ? styles.commentsSectionModalCompact : ''
+      }`}
+    >
+      {isInModal && showCommentsHeadingInModal && (
+        <div className={styles.commentsHeaderModal}>
+          <h5>
+            <i className="fas fa-comments"></i>
+            Comments{' '}
+            {safeComments.length > 0 && (
+              <span className={styles.commentCount}>({safeComments.length})</span>
+            )}
+          </h5>
+        </div>
+      )}
       {!isInModal && (
         <div className={styles.commentsHeader}>
           <h5>
@@ -124,40 +182,17 @@ export default function CommentsSection({
         </div>
       )}
 
-      {isLoading ? (
-        <div className={styles.loadingComments}>
-          <i className="fas fa-spinner fa-spin"></i>
-          <p>Loading comments...</p>
-        </div>
-      ) : safeComments.length === 0 ? (
-        <div className={styles.emptyComments}>
-          <i className="fas fa-comment-slash"></i>
-          <p>No comments yet. Be the first to comment!</p>
-        </div>
+      {isInModal ? (
+        <div className={styles.commentsMainArea}>{commentsMiddle}</div>
       ) : (
-        <>
-          <div className={styles.commentList}>
-            {visibleComments.map(comment => (
-              <CommentItem key={comment.id} comment={comment} />
-            ))}
-            <div ref={commentsEndRef} />
-          </div>
-
-          {hasMoreComments && !showMoreComments && (
-            <div className={styles.moreCommentsContainer}>
-              <button 
-                className={styles.moreCommentsBtn}
-                onClick={() => setShowMoreComments(true)}
-              >
-                <i className="fas fa-chevron-down"></i> View {safeComments.length - initialShowLimit} More Comments
-              </button>
-            </div>
-          )}
-        </>
+        commentsMiddle
       )}
 
       {userId ? (
-        <div className={styles.commentForm} id="comment-form">
+        <div
+          className={isInModal ? styles.commentFormModal : styles.commentForm}
+          id="comment-form"
+        >
           <div className={styles.commentInputWrapper}>
             <input 
               type="text"

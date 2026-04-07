@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ensureAuth, getSocket, initSocketAuth } from '@/utils/socketAuth';
 import { getChatRooms, ChatRoom, createDM } from '@/utils/chatApi';
@@ -27,6 +27,7 @@ export default function ChatPage() {
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [circleId, setCircleId] = useState<string | null>(null);
   const [pendingOffer, setPendingOffer] = useState<WebRTCSignal | null>(null);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
 
   const roomsRef = useRef<ChatRoom[]>([]);
   const selectedRoomRef = useRef<ChatRoom | null>(null);
@@ -104,6 +105,71 @@ export default function ChatPage() {
     const interval = setInterval(loadRooms, 30000);
     return () => clearInterval(interval);
   }, [userId, circleId, searchParams, router]);
+
+  const applyPresenceToRoom = useCallback(
+    (room: ChatRoom): ChatRoom => {
+      if (!userId) return room;
+      if (room.is_group) {
+        return { ...room, is_online: false };
+      }
+      const self = String(userId);
+      const other = room.members.find((m) => String(m.id) !== self);
+      const otherId = other ? String(other.id) : '';
+      return {
+        ...room,
+        is_online: Boolean(otherId && onlineUserIds.has(otherId)),
+      };
+    },
+    [userId, onlineUserIds]
+  );
+
+  const roomsWithPresence = useMemo(
+    () => rooms.map(applyPresenceToRoom),
+    [rooms, applyPresenceToRoom]
+  );
+
+  const selectedRoomWithPresence = useMemo(
+    () => (selectedRoom ? applyPresenceToRoom(selectedRoom) : null),
+    [selectedRoom, applyPresenceToRoom]
+  );
+
+  useEffect(() => {
+    if (!userId) return;
+    const socket = getSocket() ?? initSocketAuth();
+
+    const onSnapshot = (data: { onlineUserIds?: string[] }) => {
+      if (data?.onlineUserIds && Array.isArray(data.onlineUserIds)) {
+        setOnlineUserIds(new Set(data.onlineUserIds.map(String)));
+      }
+    };
+
+    const onPresence = (data: { userId?: string; online?: boolean }) => {
+      if (data?.userId == null) return;
+      const id = String(data.userId);
+      setOnlineUserIds((prev) => {
+        const next = new Set(prev);
+        if (data.online) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+    };
+
+    const requestPresence = () => {
+      socket.emit('request_presence');
+    };
+
+    socket.on('presence_snapshot', onSnapshot);
+    socket.on('user_presence', onPresence);
+    socket.on('connect', requestPresence);
+    if (socket.connected) {
+      requestPresence();
+    }
+    return () => {
+      socket.off('presence_snapshot', onSnapshot);
+      socket.off('user_presence', onPresence);
+      socket.off('connect', requestPresence);
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
@@ -301,8 +367,8 @@ export default function ChatPage() {
       <Navigation />
       <div className={styles.messengerApp}>
         <ChatList
-        rooms={rooms}
-        selectedRoom={selectedRoom}
+        rooms={roomsWithPresence}
+        selectedRoom={selectedRoomWithPresence}
         onRoomSelect={handleRoomSelect}
         onCreateGroup={() => {
           if (circleId) {
@@ -315,7 +381,7 @@ export default function ChatPage() {
         userData={userData}
       />
       <ChatWindow
-        room={selectedRoom}
+        room={selectedRoomWithPresence}
         userId={userId || ''}
         userData={userData}
         onRoomUpdate={handleRoomUpdated}

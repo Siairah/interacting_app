@@ -182,13 +182,18 @@ export function useWebRTCCall(
       stream.getTracks().forEach((t) => pc.addTrack(t, stream));
       pc.onicecandidate = onIceCandidate;
       pc.ontrack = (ev) => {
-        const incoming = ev.streams[0];
+        // Some browsers (incl. Chrome w/ Unified Plan) fire ontrack with ev.track set but streams[] empty.
+        let incoming: MediaStream | null = ev.streams[0] ?? null;
+        if (!incoming && ev.track) {
+          incoming = new MediaStream();
+          incoming.addTrack(ev.track);
+        }
         if (!incoming) return;
         setRemoteStream((prev) => {
-          if (!prev) return incoming;
+          if (!prev) return incoming as MediaStream;
           const merged = new MediaStream();
           const byKind = new Map<string, MediaStreamTrack>();
-          for (const t of [...prev.getTracks(), ...incoming.getTracks()]) {
+          for (const t of [...prev.getTracks(), ...incoming!.getTracks()]) {
             byKind.set(t.kind, t);
           }
           byKind.forEach((t) => merged.addTrack(t));

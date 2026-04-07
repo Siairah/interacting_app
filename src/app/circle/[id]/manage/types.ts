@@ -76,6 +76,8 @@ export interface Circle {
   description: string;
   cover_image: string | null;
   visibility: string;
+  /** User id of the circle creator; admins cannot be demoted via remove-admin */
+  created_by?: string;
 }
 
 export interface ManagementData {

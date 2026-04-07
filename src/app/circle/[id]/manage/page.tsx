@@ -274,6 +274,8 @@ export default function ManageCirclePage() {
           <MembersTab
             members={members}
             adminCount={admin_count}
+            circleCreatorUserId={circle?.created_by ?? null}
+            currentUserId={userId}
             onPromoteAdmin={(userId) => handlers.handlePromoteAdmin(userId, admin_count)}
             onRemoveAdmin={handlers.handleRemoveAdmin}
             onRestrictUser={handlers.handleRestrictUser}

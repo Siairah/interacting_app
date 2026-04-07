@@ -5,6 +5,9 @@ import styles from '../manage.module.css';
 interface MembersTabProps {
   members: Member[];
   adminCount: number;
+  /** Creator: others can't demote them via UI; they can still remove their own admin. */
+  circleCreatorUserId?: string | null;
+  currentUserId?: string | null;
   onPromoteAdmin: (userId: string) => void;
   onRemoveAdmin: (userId: string) => void;
   onRestrictUser: (userId: string, memberName: string) => void;
@@ -15,6 +18,8 @@ interface MembersTabProps {
 export default function MembersTab({
   members,
   adminCount,
+  circleCreatorUserId,
+  currentUserId,
   onPromoteAdmin,
   onRemoveAdmin,
   onRestrictUser,
@@ -108,7 +113,10 @@ export default function MembersTab({
                         <i className="fas fa-user-shield"></i> Make Admin
                       </button>
                     )}
-                    {member.is_admin && (
+                    {member.is_admin &&
+                      (!circleCreatorUserId ||
+                        member.user.id !== circleCreatorUserId ||
+                        (currentUserId != null && member.user.id === currentUserId)) && (
                       <button 
                         onClick={() => {
                           setOpenDropdown(null);

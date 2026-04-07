@@ -74,14 +74,25 @@ export default function CallOverlay({
     }
     const vTracks = remoteStream.getVideoTracks();
     const aTracks = remoteStream.getAudioTracks();
+    const unmuteHandlers: Array<{ t: MediaStreamTrack; fn: () => void }> = [];
+
     if (v) {
       v.srcObject = vTracks.length ? new MediaStream(vTracks) : null;
       void v.play().catch(() => {});
+      const replay = () => void v.play().catch(() => {});
+      vTracks.forEach((t) => {
+        t.addEventListener('unmute', replay);
+        unmuteHandlers.push({ t, fn: replay });
+      });
     }
     if (a) {
       a.srcObject = aTracks.length ? new MediaStream(aTracks) : null;
       void a.play().catch(() => {});
     }
+
+    return () => {
+      unmuteHandlers.forEach(({ t, fn }) => t.removeEventListener('unmute', fn));
+    };
   }, [remoteStream]);
 
   useEffect(() => {
@@ -103,9 +114,10 @@ export default function CallOverlay({
 
   const hasLocalVideoTrack = (localStream?.getVideoTracks().length ?? 0) > 0;
   const remoteVideoTracks = remoteStream?.getVideoTracks() ?? [];
-  const remoteHasLiveVideo =
+  // Don't require readyState === 'live' (briefly 'new') or unmute — avoids covering the remote <video> with the placeholder.
+  const remoteHasRenderableVideo =
     remoteVideoTracks.length > 0 &&
-    remoteVideoTracks.some((t) => t.readyState === 'live' && t.enabled);
+    remoteVideoTracks.some((t) => t.readyState !== 'ended' && t.enabled);
   const remotePlaceholderText = !remoteStream ? 'Connecting…' : 'Camera is off';
 
   return (
@@ -154,7 +166,7 @@ export default function CallOverlay({
                   autoPlay
                   muted
                 />
-                {!remoteHasLiveVideo && (
+                {!remoteHasRenderableVideo && (
                   <div className={styles.remotePlaceholder}>
                     <div className={styles.remotePlaceholderInner}>
                       {peerPic ? (

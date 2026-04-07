@@ -40,7 +40,16 @@ export default function ChatWindow({
   const { messages: socketMessages, setMessages: setSocketMessages, markAsRead } = useChatSocket(room?.id || null, userId);
 
   const peerUserId =
-    room && !room.is_group ? room.members.find((m) => m.id !== userId)?.id ?? null : null;
+    room && !room.is_group
+      ? (() => {
+          for (const m of room.members) {
+            const raw = m as { id?: string } | string;
+            const mid = typeof raw === 'string' ? raw : raw?.id;
+            if (mid && String(mid) !== String(userId)) return String(mid);
+          }
+          return null;
+        })()
+      : null;
   const canCall = Boolean(room && !room.is_group && peerUserId);
 
   const handleCallLog = useCallback(
@@ -396,6 +405,14 @@ export default function ChatWindow({
           )}
           <div className={styles.userInfo}>
             <h3>{getDisplayName()}</h3>
+            {!room.is_group && (
+              <span
+                className={room.is_online ? styles.presenceOnline : styles.presenceOffline}
+                aria-live="polite"
+              >
+                {room.is_online ? 'Online' : 'Offline'}
+              </span>
+            )}
             <p id="typing-indicator"></p>
           </div>
         </div>

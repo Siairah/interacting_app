@@ -1,0 +1,56 @@
+/* Django admin_dashboard.html — SB Admin–style border-left cards */
+
+.textXs {
+  font-size: 0.75rem;
+}
+
+.textGray500 {
+  color: #6c757d;
+}
+
+.textGray800 {
+  color: #5a5c69;
+}
+
+.borderLeftPrimary {
+  border-left: 0.25rem solid #4e73df !important;
+}
+
+.borderLeftSuccess {
+  border-left: 0.25rem solid #1cc88a !important;
+}
+
+.borderLeftInfo {
+  border-left: 0.25rem solid #36b9cc !important;
+}
+
+.borderLeftWarning {
+  border-left: 0.25rem solid #f6c23e !important;
+}
+
+.cardTitlePrimary {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #4e73df;
+}
+
+.chartWrap {
+  position: relative;
+  min-height: 280px;
+}
+
+.alertBox {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: #f8d7da;
+  border: 1px solid #f5c2c7;
+  border-radius: 0.375rem;
+  color: #842029;
+  font-size: 0.9rem;
+}

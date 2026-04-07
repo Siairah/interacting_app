@@ -240,7 +240,17 @@ export function useCircleHandlers(
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          let errorData: { message?: string };
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { message: errorText || 'Failed to remove admin' };
+          }
+          const { sanitizeErrorMessage } = await import('@/utils/errorHandler');
+          const { showToast } = await import('@/components/ToastContainer');
+          showToast(sanitizeErrorMessage(errorData.message || 'Failed to remove admin'), 'error');
+          return;
         }
 
         const { safeJson } = await import('@/utils/apiUtils');

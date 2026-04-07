@@ -15,18 +15,22 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Check if user is already logged in (using Socket.IO)
+  // Admin session or regular user session
   useEffect(() => {
     const checkAuth = async () => {
+      const { isAdminAuthenticated } = await import('@/admin/auth');
+      if (typeof window !== 'undefined' && isAdminAuthenticated()) {
+        router.replace('/admin');
+        return;
+      }
       const { ensureAuth } = await import('@/utils/socketAuth');
       const { token, userId } = await ensureAuth();
-      
-      // If already logged in, redirect to dashboard
+
       if (token && userId) {
         router.replace('/dashboard');
       }
     };
-    
+
     checkAuth();
   }, [router]);
 
@@ -44,6 +48,23 @@ export default function LoginPage() {
     setError(null);
 
     try {
+      const { isAdminEmailPassword, setAdminSession } = await import('@/admin/auth');
+      if (isAdminEmailPassword(email, password)) {
+        const { getApiUrl, safeJson } = await import('@/utils/apiUtils');
+        const adminRes = await fetch(`${getApiUrl()}/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim(), password }),
+        });
+        const adminData = await safeJson<{ success?: boolean; token?: string; message?: string }>(adminRes);
+        if (!adminRes.ok || !adminData.success || !adminData.token) {
+          throw new Error(adminData.message || 'Admin login failed. Is the backend running on port 5001?');
+        }
+        setAdminSession(adminData.token);
+        window.location.href = '/admin';
+        return;
+      }
+
       const { getApiUrl } = await import('@/utils/apiUtils');
       const res = await fetch(`${getApiUrl()}/login`, {
         method: "POST",

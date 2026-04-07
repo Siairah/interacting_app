@@ -201,6 +201,7 @@ export default function CommentModal({
               onCommentAdded={handleCommentAdded}
               initialShowLimit={50}
               isInModal={true}
+              showCommentsHeadingInModal={false}
               isLoading={isLoadingComments}
             />
           </div>

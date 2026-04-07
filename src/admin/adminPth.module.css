@@ -1,0 +1,124 @@
+/* Mirrors PTH Django `base.html` + `admin_base.html` admin shell */
+
+.root {
+  min-height: 100vh;
+  padding-top: 70px;
+  background: #f8f9fa;
+}
+
+.topNavbar {
+  background: rgba(106, 20, 235, 0.95) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  height: 70px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navbarBrand {
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: -0.5px;
+  color: #fff !important;
+  text-decoration: none;
+}
+
+.navbarBrand i {
+  margin-right: 10px;
+}
+
+.belowNav {
+  display: flex;
+  min-height: calc(100vh - 70px);
+}
+
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: #212529 !important;
+  min-height: calc(100vh - 70px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+}
+
+.sidebarInner {
+  position: sticky;
+  top: 0;
+  padding-top: 1rem;
+  padding-bottom: 1.5rem;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: #fff !important;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  transition: color 0.2s ease, background 0.2s ease;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.navLink:hover {
+  color: #0d6efd !important;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.navLinkActive {
+  color: #0d6efd !important;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.navLink i {
+  margin-right: 8px;
+  width: 20px;
+  text-align: center;
+}
+
+.exitLink {
+  color: #dc3545 !important;
+  margin-top: 1rem;
+}
+
+.exitLink:hover {
+  color: #ff6b6b !important;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: 0 1rem 2rem;
+  background: #f8f9fa;
+}
+
+@media (min-width: 768px) {
+  .main {
+    padding: 0 1.5rem 2rem;
+  }
+}
+
+.pageHeadingRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.pageH2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}

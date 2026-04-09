@@ -11,6 +11,20 @@ const ICE_SERVERS: RTCConfiguration = {
   ],
 };
 
+function getUserMediaConstraints(media: CallMedia): MediaStreamConstraints {
+  return {
+    audio: true,
+    video:
+      media === 'video'
+        ? {
+            facingMode: 'user',
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          }
+        : false,
+  };
+}
+
 export type CallUiState =
   | 'idle'
   | 'outgoing'
@@ -226,10 +240,7 @@ export function useWebRTCCall(
             sock.once('connect', () => resolve());
           });
         }
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: media === 'video',
-        });
+        const stream = await navigator.mediaDevices.getUserMedia(getUserMediaConstraints(media));
         localStreamRef.current = stream;
         setLocalStream(stream);
         const callId = newCallId();
@@ -273,10 +284,7 @@ export function useWebRTCCall(
       const media = offer.media;
       lastCallMediaRef.current = media;
       callerUserIdRef.current = offer.from;
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: media === 'video',
-      });
+      const stream = await navigator.mediaDevices.getUserMedia(getUserMediaConstraints(media));
       localStreamRef.current = stream;
       setLocalStream(stream);
       callIdRef.current = offer.callId;
@@ -287,10 +295,12 @@ export function useWebRTCCall(
       bindRemoteTracks(pc);
       pc.onicecandidate = onIceCandidate;
 
+      // Attach local tracks before setRemoteDescription so m-lines/transceivers match the offer
+      // (avoids one-way video on some browsers / mobile WebRTC stacks).
+      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+
       await pc.setRemoteDescription(new RTCSessionDescription(offer.sdp));
       await flushPendingIce();
-
-      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);

@@ -1,29 +1,12 @@
 'use client';
 
+import '@/utils/webrtcAdapter';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { acquireCallMediaStream } from '@/utils/acquireMediaStream';
 import { getSocket, initSocketAuth } from '@/utils/socketAuth';
+import { getRtcPeerConnectionConfig } from '@/utils/webrtcIceConfig';
 import type { CallMedia, CallLogEvent, WebRTCSignal } from '@/types/webrtc';
-
-const ICE_SERVERS: RTCConfiguration = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ],
-};
-
-function getUserMediaConstraints(media: CallMedia): MediaStreamConstraints {
-  return {
-    audio: true,
-    video:
-      media === 'video'
-        ? {
-            facingMode: 'user',
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          }
-        : false,
-  };
-}
 
 export type CallUiState =
   | 'idle'
@@ -43,6 +26,21 @@ function newCallId(): string {
     return crypto.randomUUID();
   }
   return `call_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
+
+/**
+ * Many mobile browsers only paint the local camera preview if the &lt;video&gt; has
+ * srcObject (and often played) *before* tracks are attached to RTCPeerConnection.
+ * Wait for the next frame(s) + macrotask so React can commit the preview element.
+ */
+function waitForLocalPreviewPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.setTimeout(resolve, 16);
+      });
+    });
+  });
 }
 
 export function useWebRTCCall(
@@ -212,13 +210,15 @@ export function useWebRTCCall(
       };
       mergeIn();
       ev.track.addEventListener('unmute', mergeIn);
+      ev.track.addEventListener('mute', mergeIn);
+      ev.track.addEventListener('ended', mergeIn);
     };
   }, []);
 
   /** Caller: add local tracks, then createOffer. */
   const attachPeerCaller = useCallback(
     (stream: MediaStream) => {
-      const pc = new RTCPeerConnection(ICE_SERVERS);
+      const pc = new RTCPeerConnection(getRtcPeerConnectionConfig());
       pcRef.current = pc;
       bindRemoteTracks(pc);
       pc.onicecandidate = onIceCandidate;
@@ -240,17 +240,24 @@ export function useWebRTCCall(
             sock.once('connect', () => resolve());
           });
         }
-        const stream = await navigator.mediaDevices.getUserMedia(getUserMediaConstraints(media));
+        const stream = await acquireCallMediaStream(media);
         localStreamRef.current = stream;
-        setLocalStream(stream);
         const callId = newCallId();
         callIdRef.current = callId;
         roleRef.current = 'caller';
+        // Outgoing + stream together so CallOverlay mounts the local <video> before WebRTC attaches.
+        flushSync(() => {
+          setLocalStream(stream);
+          setUiState('outgoing');
+        });
+        await waitForLocalPreviewPaint();
         attachPeerCaller(stream);
         const pc = pcRef.current!;
-        const offer = await pc.createOffer();
+        const offer = await pc.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: media === 'video',
+        });
         await pc.setLocalDescription(offer);
-        setUiState('outgoing');
         emitSignal({
           type: 'offer',
           callId,
@@ -284,13 +291,19 @@ export function useWebRTCCall(
       const media = offer.media;
       lastCallMediaRef.current = media;
       callerUserIdRef.current = offer.from;
-      const stream = await navigator.mediaDevices.getUserMedia(getUserMediaConstraints(media));
+      const stream = await acquireCallMediaStream(media);
       localStreamRef.current = stream;
-      setLocalStream(stream);
       callIdRef.current = offer.callId;
       roleRef.current = 'callee';
+      // Connecting + stream so CallOverlay shows local <video> before addTrack (fixes black self-view).
+      flushSync(() => {
+        setLocalStream(stream);
+        setUiState('connecting');
+      });
 
-      const pc = new RTCPeerConnection(ICE_SERVERS);
+      await waitForLocalPreviewPaint();
+
+      const pc = new RTCPeerConnection(getRtcPeerConnectionConfig());
       pcRef.current = pc;
       bindRemoteTracks(pc);
       pc.onicecandidate = onIceCandidate;
@@ -302,11 +315,13 @@ export function useWebRTCCall(
       await pc.setRemoteDescription(new RTCSessionDescription(offer.sdp));
       await flushPendingIce();
 
-      const answer = await pc.createAnswer();
+      const answer = await pc.createAnswer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: media === 'video',
+      });
       await pc.setLocalDescription(answer);
       await flushPendingIce();
 
-      setUiState('connecting');
       emitSignal({
         type: 'answer',
         callId: offer.callId,

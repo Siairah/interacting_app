@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { CallMedia } from '@/types/webrtc';
 import type { CallUiState } from '@/hooks/useWebRTCCall';
 import { useCallRingtone } from '@/hooks/useCallRingtone';
@@ -60,9 +60,26 @@ export default function CallOverlay({
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
+  /** After connect: full-bleed remote briefly, then settle to rounded stage + corner PiP (Messenger-like). */
+  const [videoLayoutSettled, setVideoLayoutSettled] = useState(false);
+
+  const isVideoCall =
+    incomingMedia === 'video' ||
+    (uiState === 'outgoing' && (localStream?.getVideoTracks().length ?? 0) > 0) ||
+    (uiState === 'active' &&
+      ((localStream?.getVideoTracks().length ?? 0) > 0 || (remoteStream?.getVideoTracks().length ?? 0) > 0));
+
   const ringMode =
     uiState === 'incoming' ? 'incoming' : uiState === 'outgoing' ? 'outgoing' : 'off';
   useCallRingtone(ringMode);
+
+  /** Video-only stream for self-preview: some engines render this more reliably than audio+video on the same element. */
+  const localPreviewStream = useMemo(() => {
+    if (!localStream) return null;
+    const v = localStream.getVideoTracks()[0];
+    if (!v || v.readyState === 'ended') return null;
+    return new MediaStream([v]);
+  }, [localStream]);
 
   useEffect(() => {
     const v = remoteVideoRef.current;
@@ -78,6 +95,8 @@ export default function CallOverlay({
 
     if (v) {
       // Bind full stream so audio+video stay in sync; muted on <video> avoids echo (audio uses <audio> below).
+      v.setAttribute('playsinline', '');
+      v.setAttribute('webkit-playsinline', '');
       v.srcObject = remoteStream && vTracks.length ? remoteStream : null;
       void v.play().catch(() => {});
       const replay = () => void v.play().catch(() => {});
@@ -96,20 +115,62 @@ export default function CallOverlay({
     };
   }, [remoteStream]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = localVideoRef.current;
     if (!el) return;
-    el.srcObject = localStream;
-    if (localStream) void el.play().catch(() => {});
-  }, [localStream]);
+    if (!localPreviewStream) {
+      el.srcObject = null;
+      return;
+    }
+
+    // iOS / WebKit / Android Chrome: inline muted autoplay
+    el.setAttribute('playsinline', '');
+    el.setAttribute('webkit-playsinline', '');
+    el.setAttribute('muted', '');
+    el.playsInline = true;
+    el.muted = true;
+    el.defaultMuted = true;
+    el.autoplay = true;
+    el.srcObject = localPreviewStream;
+
+    const kick = () => {
+      requestAnimationFrame(() => {
+        void el.play().catch(() => {});
+      });
+    };
+    kick();
+    el.addEventListener('loadedmetadata', kick);
+    el.addEventListener('loadeddata', kick);
+    el.addEventListener('canplay', kick);
+    el.addEventListener('playing', kick);
+    return () => {
+      el.removeEventListener('loadedmetadata', kick);
+      el.removeEventListener('loadeddata', kick);
+      el.removeEventListener('canplay', kick);
+      el.removeEventListener('playing', kick);
+    };
+  }, [localPreviewStream, isVideoOff]);
+
+  useEffect(() => {
+    if (!isVideoCall || uiState === 'idle' || uiState === 'ended') {
+      setVideoLayoutSettled(false);
+      return;
+    }
+    // Ringing / placing: keep normal inset layout so local preview stays visible (phones).
+    if (uiState === 'outgoing' || uiState === 'incoming') {
+      setVideoLayoutSettled(true);
+      return;
+    }
+    if (uiState !== 'connecting' && uiState !== 'active') {
+      setVideoLayoutSettled(false);
+      return;
+    }
+    setVideoLayoutSettled(false);
+    const t = window.setTimeout(() => setVideoLayoutSettled(true), 720);
+    return () => clearTimeout(t);
+  }, [isVideoCall, uiState]);
 
   if (uiState === 'idle' || uiState === 'ended') return null;
-
-  const isVideoCall =
-    incomingMedia === 'video' ||
-    (uiState === 'outgoing' && (localStream?.getVideoTracks().length ?? 0) > 0) ||
-    (uiState === 'active' &&
-      ((localStream?.getVideoTracks().length ?? 0) > 0 || (remoteStream?.getVideoTracks().length ?? 0) > 0));
 
   const showVideo = isVideoCall && (uiState === 'active' || uiState === 'connecting' || uiState === 'outgoing');
 
@@ -156,7 +217,15 @@ export default function CallOverlay({
 
         <div className={styles.mainArea}>
           {showVideo ? (
-            <div className={styles.videoStage}>
+            <div
+              className={`${styles.videoStage} ${
+                uiState === 'connecting' || uiState === 'active'
+                  ? videoLayoutSettled
+                    ? styles.videoStageSettled
+                    : styles.videoStageImmersive
+                  : styles.videoStageSettled
+              }`}
+            >
               <div className={styles.remoteWrap}>
                 <video
                   ref={remoteVideoRef}
@@ -180,9 +249,21 @@ export default function CallOverlay({
               </div>
 
               {hasLocalVideoTrack && (
-                <div className={styles.localPip}>
+                <div
+                  className={`${styles.localPip} ${
+                    (uiState === 'connecting' || uiState === 'active') && !videoLayoutSettled
+                      ? styles.localPipDuringImmersive
+                      : ''
+                  }`}
+                >
                   <div className={styles.localPipInner}>
-                    <video ref={localVideoRef} className={styles.localVideo} playsInline autoPlay muted />
+                    <video
+                      ref={localVideoRef}
+                      className={styles.localVideo}
+                      playsInline
+                      autoPlay
+                      muted
+                    />
                     {isVideoOff && (
                       <div className={styles.cameraOffPip}>
                         <i className="fas fa-video-slash" aria-hidden />

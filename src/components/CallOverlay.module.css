@@ -173,6 +173,23 @@
   overflow: hidden;
   margin: 0 0.5rem;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  isolation: isolate;
+  transition:
+    margin 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+    min-height 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Messenger-like: remote full-bleed first, then inset “card” + corner self-view */
+.videoStageImmersive {
+  margin: 0;
+  border-radius: 0;
+  min-height: min(72dvh, 560px);
+}
+
+.videoStageSettled {
+  margin: 0 0.5rem;
+  border-radius: 0 0 20px 20px;
 }
 
 .remoteWrap {
@@ -235,18 +252,49 @@
 
 .localPip {
   position: absolute;
-  bottom: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   right: 12px;
-  z-index: 2;
+  left: auto;
+  margin-left: 0;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.35rem;
+  pointer-events: none;
+  transition:
+    bottom 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    right 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    left 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    margin 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/*
+ * Do NOT use transform on PiP ancestors of <video>. WebKit often paints a black
+ * tile when video is under transformed parents (incl. translateX centering + scaleX mirror).
+ * Center immersive PiP with left + negative margin instead of translateX(50%).
+ */
+.localPipDuringImmersive {
+  right: auto;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  margin-left: calc(-0.5 * min(88vw, 300px));
+  align-items: center;
+}
+
+.localPipDuringImmersive .localPipInner {
+  width: min(88vw, 300px);
+  height: auto;
+  min-width: 200px;
+  min-height: 112px;
+  aspect-ratio: 16 / 9;
 }
 
 .localPipInner {
   position: relative;
   width: min(32vw, 140px);
+  min-width: 104px;
+  min-height: 139px;
   aspect-ratio: 3 / 4;
   border-radius: 14px;
   overflow: hidden;
@@ -256,10 +304,13 @@
 }
 
 .localVideo {
+  display: block;
   width: 100%;
   height: 100%;
+  min-height: 100px;
   object-fit: cover;
-  transform: scaleX(-1);
+  opacity: 1;
+  /* Avoid CSS transforms here — they break local camera preview on several WebKit/Android GPUs */
 }
 
 .cameraOffPip {
@@ -479,6 +530,16 @@
   }
 
   .videoStage {
+    margin: 0 1rem;
+    border-radius: 0 0 24px 24px;
+  }
+
+  .videoStage.videoStageImmersive {
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .videoStage.videoStageSettled {
     margin: 0 1rem;
     border-radius: 0 0 24px 24px;
   }

@@ -69,6 +69,14 @@ export default function ManageCirclePage() {
     const MIN_TOGGLE_INTERVAL = 180;
     const SCROLL_TO_TOP_THRESHOLD = 300;
 
+    const getScrollTop = () =>
+      Math.max(
+        el.scrollTop,
+        window.scrollY,
+        document.documentElement.scrollTop,
+        document.body.scrollTop
+      );
+
     const onScroll = () => {
       if (rafIdRef.current) return;
       rafIdRef.current = requestAnimationFrame(() => {
@@ -78,7 +86,7 @@ export default function ManageCirclePage() {
           return;
         }
 
-        const current = el.scrollTop;
+        const current = getScrollTop();
         const last = lastScrollTopRef.current;
 
         setShowScrollToTop(current > SCROLL_TO_TOP_THRESHOLD);
@@ -106,8 +114,10 @@ export default function ManageCirclePage() {
     };
 
     el.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       el.removeEventListener('scroll', onScroll as EventListener);
+      window.removeEventListener('scroll', onScroll as EventListener);
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
   }, [isNavHidden]);
@@ -172,68 +182,70 @@ export default function ManageCirclePage() {
       )}
 
       <div ref={contentRef} className={`${styles.content} ${isNavHidden ? styles.compactTop : ''}`}>
-        <div className={styles.pageHeader}>
-          <div className={styles.headerLeft}>
-            <h1 className={styles.pageTitle}>
-              <i className="fas fa-users-cog"></i>
-              {circle.name} Management
-            </h1>
-            <div className={styles.circleMeta}>
-              <span className={styles.metaBadge}>
-                <i className="fas fa-users"></i> {members.length} Members
-              </span>
-              <span className={styles.metaBadge}>
-                <i className="fas fa-user-shield"></i> {admin_count} Admins
-              </span>
-              <span className={styles.metaBadge}>
-                <i className="fas fa-clock"></i> {pending_requests.length} Pending
-              </span>
-              <span className={styles.metaBadge}>
-                <i className="fas fa-flag"></i> {flagged_posts_count} Flagged
-              </span>
+        <div className={styles.manageUpper}>
+          <div className={styles.pageHeader}>
+            <div className={styles.headerLeft}>
+              <h1 className={styles.pageTitle}>
+                <i className="fas fa-users-cog"></i>
+                {circle.name} Management
+              </h1>
+              <div className={styles.circleMeta}>
+                <span className={styles.metaBadge}>
+                  <i className="fas fa-users"></i> {members.length} Members
+                </span>
+                <span className={styles.metaBadge}>
+                  <i className="fas fa-user-shield"></i> {admin_count} Admins
+                </span>
+                <span className={styles.metaBadge}>
+                  <i className="fas fa-clock"></i> {pending_requests.length} Pending
+                </span>
+                <span className={styles.metaBadge}>
+                  <i className="fas fa-flag"></i> {flagged_posts_count} Flagged
+                </span>
+              </div>
+            </div>
+            <div className={styles.headerActions}>
+              <button
+                onClick={() => {
+                  const newVisibility = circle.visibility === 'public' ? 'private' : 'public';
+                  handlers.handleUpdateCircle({ visibility: newVisibility });
+                }}
+                className={styles.visibilityBtn}
+                title={`Change to ${circle.visibility === 'public' ? 'Private' : 'Public'}`}
+              >
+                <i className={`fas fa-${circle.visibility === 'public' ? 'lock' : 'globe'}`}></i>
+                Make {circle.visibility === 'public' ? 'Private' : 'Public'}
+              </button>
+              <Link href={`/circle/${circleId}`} className={styles.backLink}>
+                <i className="fas fa-arrow-left"></i> Back to Circle
+              </Link>
             </div>
           </div>
-          <div className={styles.headerActions}>
-            <button
-              onClick={() => {
-                const newVisibility = circle.visibility === 'public' ? 'private' : 'public';
-                handlers.handleUpdateCircle({ visibility: newVisibility });
-              }}
-              className={styles.visibilityBtn}
-              title={`Change to ${circle.visibility === 'public' ? 'Private' : 'Public'}`}
-            >
-              <i className={`fas fa-${circle.visibility === 'public' ? 'lock' : 'globe'}`}></i>
-              Make {circle.visibility === 'public' ? 'Private' : 'Public'}
-            </button>
-            <Link href={`/circle/${circleId}`} className={styles.backLink}>
-              <i className="fas fa-arrow-left"></i> Back to Circle
-            </Link>
-          </div>
-        </div>
 
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statValue}>{members.length}</div>
-            <div className={styles.statLabel}>
-              <i className="fas fa-users"></i> Members
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <div className={styles.statValue}>{members.length}</div>
+              <div className={styles.statLabel}>
+                <i className="fas fa-users"></i> Members
+              </div>
             </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statValue}>{pending_requests.length}</div>
-            <div className={styles.statLabel}>
-              <i className="fas fa-user-plus"></i> Pending Requests
+            <div className={styles.statCard}>
+              <div className={styles.statValue}>{pending_requests.length}</div>
+              <div className={styles.statLabel}>
+                <i className="fas fa-user-plus"></i> Pending Requests
+              </div>
             </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statValue}>{pending_posts_count}</div>
-            <div className={styles.statLabel}>
-              <i className="fas fa-file-upload"></i> Posts to Review
+            <div className={styles.statCard}>
+              <div className={styles.statValue}>{pending_posts_count}</div>
+              <div className={styles.statLabel}>
+                <i className="fas fa-file-upload"></i> Posts to Review
+              </div>
             </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statValue}>{flagged_posts_count}</div>
-            <div className={styles.statLabel}>
-              <i className="fas fa-flag"></i> Flagged Items
+            <div className={styles.statCard}>
+              <div className={styles.statValue}>{flagged_posts_count}</div>
+              <div className={styles.statLabel}>
+                <i className="fas fa-flag"></i> Flagged Items
+              </div>
             </div>
           </div>
         </div>

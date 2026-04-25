@@ -6,7 +6,8 @@
     min-height: 100dvh;
     width: 100%;
     position: relative;
-    overflow-x: visible;
+    overflow-x: hidden;
+    overflow-y: visible;
 }
 
 .container {
@@ -15,12 +16,20 @@
     margin-top: 70px;
     padding: 1.25rem clamp(0.75rem, 2vw, 1.5rem)
         max(2rem, calc(1rem + env(safe-area-inset-bottom, 0px)));
-    min-height: calc(100dvh - 70px);
-    overflow-x: visible;
+    overflow-x: hidden;
+    overflow-y: visible;
     scroll-behavior: smooth;
     position: relative;
     z-index: 1;
     transition: margin-top 0.3s ease;
+    overscroll-behavior: auto;
+}
+
+/* Min-height only with top nav (desktop); mobile uses document scroll + bottom nav padding */
+@media (min-width: 993px) {
+    .container {
+        min-height: calc(100dvh - 70px);
+    }
 }
 
 /* When top navbar hides on scroll, remove the empty gap (desktop top nav only) */
@@ -337,9 +346,19 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    min-height: 100dvh;
     gap: 1rem;
     animation: fadeIn 0.5s ease-out;
+    padding-left: max(1rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1rem, env(safe-area-inset-right, 0px));
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .loadingContainer,
+    .errorContainer {
+        padding-bottom: var(--app-mobile-nav-pad);
+    }
 }
 
 @keyframes fadeIn {
@@ -2031,22 +2050,27 @@
 /* =============== Mobile Responsive Design =============== */
 @media (max-width: 992px) {
     .pageWrapper {
-        min-height: 100vh;
+        min-height: 100dvh;
         height: auto;
-        overflow-x: clip;
+        max-height: none;
+        overflow-x: hidden;
         overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
     }
 
     .container {
-        padding: 1rem;
         margin-top: 0;
-        padding-top: 1rem;
-        padding-bottom: 80px;
+        padding: max(0.75rem, env(safe-area-inset-top, 0px))
+            max(0.75rem, env(safe-area-inset-right, 0px))
+            var(--app-mobile-nav-pad)
+            max(0.75rem, env(safe-area-inset-left, 0px));
         min-height: auto;
         height: auto;
         max-height: none;
         display: block;
-        overflow: visible;
+        overflow-x: hidden;
+        overflow-y: visible;
     }
 
     .circleInfoSection {
@@ -2065,15 +2089,21 @@
         order: 2;
         display: block;
         height: auto;
-        min-height: 0;
-        overflow: visible;
-        padding: 1.15rem 1.2rem;
+        min-height: auto;
+        overflow-x: hidden;
+        overflow-y: visible;
+        padding: 1rem clamp(0.5rem, 2vw, 1rem) 1.25rem;
         grid-row: auto;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
     .circleMainScroll {
         overflow: visible;
         padding: 0;
+        min-width: 0;
+        width: 100%;
     }
 
     .circleSidebar {
@@ -2107,8 +2137,8 @@
     }
 
     .scrollToTopBtn {
-        bottom: 20px;
-        right: 20px;
+        bottom: calc(var(--app-mobile-nav-height, 68px) + 14px);
+        right: max(16px, env(safe-area-inset-right, 0px));
         width: 45px;
         height: 45px;
         font-size: 16px;
@@ -2116,6 +2146,13 @@
 
     .postsGrid {
         gap: 16px;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .eventsList {
+        width: 100%;
+        min-width: 0;
     }
 
     .sectionHeader {
@@ -2124,23 +2161,55 @@
         gap: 12px;
     }
 
+    .sectionTitle {
+        word-break: break-word;
+        line-height: 1.3;
+    }
+
     .createPostBtn {
         width: 100%;
+        justify-content: center;
+        min-height: 44px;
+    }
+
+    .eventItemHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .eventFooter {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .eventTitle,
+    .eventDate,
+    .eventDescription {
+        word-break: break-word;
+    }
+
+    .btnRsvp {
+        width: 100%;
+        min-height: 44px;
         justify-content: center;
     }
 }
 
 @media (max-width: 768px) {
     .pageWrapper {
-        min-height: 100vh;
+        min-height: 100dvh;
         overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
     }
 
     .container {
-        padding: 0.75rem;
         margin-top: 0;
-        padding-bottom: 80px; /* Space for bottom navigation */
+        padding: max(0.75rem, env(safe-area-inset-top, 0px)) max(0.75rem, env(safe-area-inset-right, 0px))
+            var(--app-mobile-nav-pad) max(0.75rem, env(safe-area-inset-left, 0px));
         min-height: auto;
+        overflow-x: hidden;
     }
 
     .circleCover {
@@ -2171,19 +2240,28 @@
         padding: 0.65rem 1.25rem;
         font-size: 0.9rem;
     }
+
+    .scrollToTopBtn {
+        bottom: calc(var(--app-mobile-nav-height, 68px) + 14px);
+        right: 16px;
+        width: 44px;
+        height: 44px;
+    }
 }
 
 @media (max-width: 480px) {
     .pageWrapper {
-        min-height: 100vh;
+        min-height: 100dvh;
         overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
     }
 
     .container {
-        padding: 0.5rem;
         margin-top: 0;
-        padding-bottom: 80px; /* Space for bottom navigation */
+        padding: max(0.5rem, env(safe-area-inset-top, 0px)) max(0.5rem, env(safe-area-inset-right, 0px))
+            var(--app-mobile-nav-pad) max(0.5rem, env(safe-area-inset-left, 0px));
         min-height: auto;
+        overflow-x: hidden;
     }
 
     .circleCover {
@@ -2200,12 +2278,29 @@
         border-radius: 16px;
     }
 
+    .contentTabs {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .tabBtn {
+        flex: 1 1 calc(50% - 0.35rem);
+        min-height: 44px;
+        justify-content: center;
+        padding: 0.65rem 0.85rem;
+        font-size: 0.9rem;
+    }
+
     .scrollToTopBtn {
-        bottom: 80px; /* Above bottom navigation */
-        right: 15px;
+        bottom: calc(var(--app-mobile-nav-height, 68px) + 12px);
+        right: max(12px, env(safe-area-inset-right, 0px));
         width: 40px;
         height: 40px;
         font-size: 14px;
+    }
+
+    .eventItem {
+        padding: 1rem;
     }
 }
 
@@ -2228,6 +2323,15 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+}
+
+@media (max-width: 992px) {
+    .sectionTitle {
+        font-size: clamp(1.05rem, 3.8vw, 1.35rem);
+    }
 }
 
 .createPostBtn {

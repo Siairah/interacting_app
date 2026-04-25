@@ -180,6 +180,22 @@ export default function ReportPostModal({
           </button>
         </div>
 
+        <div className={styles.modalHeaderCompact}>
+          <h3 className={styles.modalTitleCompact}>
+            <i className="fas fa-flag" aria-hidden />
+            Report post
+          </h3>
+          <button
+            type="button"
+            className={styles.closeButtonCompact}
+            onClick={onClose}
+            aria-label="Close"
+            title="Close"
+          >
+            <i className="fas fa-times" aria-hidden />
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} className={styles.modalBody}>
           <div className={styles.postPreview}>
             <div className={styles.postPreviewHeader}>

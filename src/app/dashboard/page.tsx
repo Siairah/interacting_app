@@ -104,6 +104,14 @@ export default function DashboardPage() {
     const MIN_TOGGLE_INTERVAL = 180; // ms to prevent rapid toggling
     const SCROLL_TO_TOP_THRESHOLD = 300; // px to show scroll-to-top button
 
+    const getScrollTop = () =>
+      Math.max(
+        el.scrollTop,
+        window.scrollY,
+        document.documentElement.scrollTop,
+        document.body.scrollTop
+      );
+
     const onScroll = () => {
       if (rafIdRef.current) return; // throttle to next frame
       rafIdRef.current = requestAnimationFrame(() => {
@@ -113,7 +121,7 @@ export default function DashboardPage() {
           return;
         }
 
-        const current = el.scrollTop;
+        const current = getScrollTop();
         const last = lastScrollTopRef.current;
 
         // Show/hide scroll-to-top button
@@ -142,8 +150,10 @@ export default function DashboardPage() {
     };
 
     el.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       el.removeEventListener('scroll', onScroll as EventListener);
+      window.removeEventListener('scroll', onScroll as EventListener);
       if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     };
   }, [isNavHidden]);

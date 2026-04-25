@@ -162,9 +162,7 @@ img[loading="lazy"] {
     -webkit-tap-highlight-color: transparent;
   }
   
-  /* Optimize scroll containers on mobile */
-  [class*="Container"],
-  [class*="container"],
+  /* Scroll helpers — avoid matching every *container* CSS-module hash (breaks page scroll on circle, etc.) */
   [class*="feed"],
   [class*="Feed"] {
     -webkit-overflow-scrolling: touch;

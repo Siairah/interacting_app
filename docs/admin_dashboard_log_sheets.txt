@@ -1,0 +1,88 @@
+================================================================================
+PROJECT PROGRESS LOG — ADMIN DASHBOARD (4 MEETINGS)
+================================================================================
+Fill in dates before submission. Supervisor comments line left blank for signature.
+
+Student name: Sisir Sharma
+Surname: Sharma
+Student number: 2408195
+Supervisor: Bhanu Aryal
+Project title: Community Base Interaction APP
+================================================================================
+
+
+--------------------------------------------------------------------------------
+LOG SHEET 1
+--------------------------------------------------------------------------------
+Date: ____________________
+
+What have you done since the last meeting
+1. Set up the admin section routing and layout (admin layout, shell navigation, and sidebar links to dashboard, users, posts, circles, moderation views).
+2. Implemented admin access control so only authenticated admin users can open admin routes (admin guard / redirect for non-admin sessions).
+3. Created the Admin Dashboard page structure with placeholder sections ready to receive live statistics from the backend.
+
+What do you aim to complete before the next meeting
+1. Integrate the admin dashboard API endpoint and display total registered user count on the dashboard.
+2. Display “new users today” and “online users now” on the user summary area of the admin dashboard.
+3. Handle loading and error states on the dashboard when the statistics API fails or is slow.
+
+Supervisor comments
+
+
+--------------------------------------------------------------------------------
+LOG SHEET 2
+--------------------------------------------------------------------------------
+Date: ____________________
+
+What have you done since the last meeting
+1. Connected the admin dashboard to the backend statistics API and implemented the Users KPI card showing total users, new registrations today, and currently online users.
+2. Implemented additional dashboard summary cards for posts (total posts, posts today, posts with media) and engagement (likes and comments totals and daily counts).
+3. Added an error banner with retry on the admin dashboard when statistics fail to load.
+
+What do you aim to complete before the next meeting
+1. Implement the moderation summary block on the admin dashboard (e.g. pending reports / flagged items counts, aligned with backend fields).
+2. Add the multi-series trend chart (new users, new posts, engagement over time) using the dashboard trend payload.
+3. Show growth-rate indicators on the dashboard where provided by the API.
+
+Supervisor comments
+
+
+--------------------------------------------------------------------------------
+LOG SHEET 3
+--------------------------------------------------------------------------------
+Date: ____________________
+
+What have you done since the last meeting
+1. Completed the moderation overview section on the admin dashboard with counts relevant to community safety (e.g. open reports / flagged queue as returned by the API).
+2. Implemented the Chart.js trend chart on the admin dashboard for visual tracking of user growth, posting activity, and engagement over the selected date range.
+3. Integrated growth-rate percentages on the dashboard for quick comparison across users, posts, and engagement.
+
+What do you aim to complete before the next meeting
+1. Align the Admin Users page statistics strip (total users, active users, new users in period, online users) with the same definitions as the dashboard for consistency.
+2. Polish responsive layout of admin dashboard cards on smaller screens so all KPIs remain readable.
+3. Review navigation from the dashboard to the Admin Analytics page and ensure charts load without errors.
+
+Supervisor comments
+
+
+--------------------------------------------------------------------------------
+LOG SHEET 4
+--------------------------------------------------------------------------------
+Date: ____________________
+
+What have you done since the last meeting
+1. Verified and refined the Admin Users page so summary statistics (total user count, new-user activity, online user count) match the admin dashboard metrics and backend definitions.
+2. Tested the Admin Analytics page end-to-end with the same authentication flow as the dashboard and confirmed chart data displays correctly.
+3. Performed final UI checks on the admin dashboard (card alignment, icons, loading placeholders) and documented any known limitations for the project report.
+
+What do you aim to complete before the next meeting
+1. Prepare demonstration screenshots or a short walkthrough of the admin dashboard for the final presentation.
+2. Complete any remaining minor fixes from supervisor feedback on the admin module.
+3. Final integration test: admin login → dashboard KPIs → users list → one moderation action (if required by assessment).
+
+Supervisor comments
+
+
+================================================================================
+END OF DOCUMENT
+================================================================================

@@ -1158,9 +1158,15 @@
         overflow: visible;
         padding: 0;
     }
-    
+
+    /* Avoid trapped 100vh scrollport (breaks touch scroll on many mobile browsers) */
     .dashboardWrapper {
-        overflow-y: auto;
+        min-height: 100dvh;
+        height: auto;
+        max-height: none;
+        overflow-x: hidden;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
     }
 }
 

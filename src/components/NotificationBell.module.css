@@ -61,17 +61,44 @@
 
 .dropdownHeader {
   padding: 1rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+}
+
+.dropdownHeaderRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .dropdownHeader h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: clamp(1rem, 3.5vw, 1.1rem);
   font-weight: 600;
   color: #1f2937;
+  flex: 1;
+  min-width: 0;
+}
+
+.viewAllLink {
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #667eea;
+  text-decoration: none;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.viewAllLink:active {
+  background: rgba(102, 126, 234, 0.12);
 }
 
 .markAllRead {
@@ -83,6 +110,8 @@
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   transition: background 0.2s;
+  width: 100%;
+  text-align: center;
 }
 
 .markAllRead:hover {
@@ -92,7 +121,10 @@
 .notificationsList {
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .notificationItem {
@@ -138,6 +170,7 @@
   color: #374151;
   line-height: 1.4;
   word-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .notificationTime {
@@ -190,25 +223,65 @@
   background: #94a3b8;
 }
 
-/* Mobile responsiveness */
+/* Mobile: main nav is fixed at the bottom — open panel upward so it stays on screen */
 @media (max-width: 768px) {
   .dropdown {
     width: min(380px, calc(100vw - 24px));
     right: 0;
     left: auto;
-    max-height: min(480px, 70dvh);
+    top: auto;
+    bottom: calc(100% + 8px);
+    max-height: min(420px, 52dvh);
+    z-index: 1100;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.12);
+    border-radius: 14px;
+  }
+
+  .dropdownHeader {
+    padding: max(0.75rem, env(safe-area-inset-top, 0px)) 0.85rem 0.65rem;
+  }
+
+  .viewAllLink {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .markAllRead {
+    align-self: flex-start;
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .notificationItem {
+    min-height: 48px;
+    padding: 0.85rem 0.65rem;
   }
 }
 
 @media (max-width: 480px) {
   .dropdown {
-    width: calc(100vw - 16px);
-    max-width: 400px;
-    right: max(-8px, calc(env(safe-area-inset-right, 0px) - 8px));
+    width: calc(100vw - max(16px, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px)));
+    max-width: min(400px, 100vw - 16px);
+    right: max(0px, calc(env(safe-area-inset-right, 0px) - 4px));
+    top: auto;
+    bottom: calc(100% + 8px);
+    max-height: min(360px, 50dvh);
   }
 
   .notificationsList {
-    max-height: min(360px, 55dvh);
+    max-height: min(320px, 42dvh);
+  }
+}
+
+@media (max-width: 360px) {
+  .dropdownHeader h3 {
+    font-size: 0.95rem;
+  }
+
+  .viewAllLink {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.4rem;
   }
 }
 

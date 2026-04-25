@@ -1,5 +1,4 @@
-import { getAdminToken } from "@/admin/auth";
-import { getApiUrl, safeJson } from "@/utils/apiUtils";
+import { adminJsonFetch } from "@/admin/adminFetch";
 
 export type AdminUserStats = {
   total_users: number;
@@ -64,27 +63,6 @@ export type AdminDashboardPayload = {
   };
 };
 
-type DashboardResponse =
-  | ({ success: true } & AdminDashboardPayload)
-  | { success: false; message?: string };
-
 export async function fetchAdminDashboard(): Promise<AdminDashboardPayload> {
-  const token = getAdminToken();
-  if (!token) {
-    throw new Error("Admin session expired. Log in again from the home page.");
-  }
-
-  const res = await fetch(`${getApiUrl()}/admin/dashboard-stats`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const data = (await safeJson(res)) as DashboardResponse;
-  if (res.status === 401) {
-    throw new Error("message" in data && data.message ? data.message : "Session expired. Log in again.");
-  }
-  if (!res.ok || !data.success) {
-    const msg =
-      typeof data === "object" && data && "message" in data ? String((data as { message?: string }).message) : "";
-    throw new Error(msg || "Could not load dashboard stats");
-  }
-  return data as AdminDashboardPayload;
+  return adminJsonFetch<AdminDashboardPayload>("/admin/dashboard-stats", { method: "GET" });
 }

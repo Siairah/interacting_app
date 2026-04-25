@@ -201,6 +201,7 @@ export default function CommentModal({
               onCommentAdded={handleCommentAdded}
               initialShowLimit={50}
               isInModal={true}
+              unifiedModalScroll
               showCommentsHeadingInModal={false}
               isLoading={isLoadingComments}
             />

@@ -1,11 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import AdminErrorBanner from "@/admin/components/AdminErrorBanner";
 import AdminPthPageFrame from "@/admin/components/AdminPthPageFrame";
 import { adminListReports, adminReportsBulk, adminResolveReport } from "@/admin/managementApi";
+import { useAdminAuthRedirect } from "@/admin/useAdminAuthRedirect";
 import AdminPagination from "../components/AdminPagination";
 
 export default function AdminReportsClient() {
+  const tryRedirect = useAdminAuthRedirect();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("pending");
@@ -27,12 +30,14 @@ export default function AdminReportsClient() {
       setData(r);
       setSelected(new Set());
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed");
-      setData(null);
+      if (!tryRedirect(e)) {
+        setErr(e instanceof Error ? e.message : "Failed");
+        setData(null);
+      }
     } finally {
       setLoading(false);
     }
-  }, [page, search, status]);
+  }, [page, search, status, tryRedirect]);
 
   useEffect(() => {
     void load();
@@ -44,7 +49,7 @@ export default function AdminReportsClient() {
       await adminResolveReport(id);
       await load();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed");
+      if (!tryRedirect(e)) setErr(e instanceof Error ? e.message : "Failed");
     } finally {
       setBusy(false);
     }
@@ -59,7 +64,7 @@ export default function AdminReportsClient() {
       await adminReportsBulk(ids, action);
       await load();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Bulk failed");
+      if (!tryRedirect(e)) setErr(e instanceof Error ? e.message : "Bulk failed");
     } finally {
       setBusy(false);
     }
@@ -71,6 +76,7 @@ export default function AdminReportsClient() {
 
   return (
     <AdminPthPageFrame title="Report Management" breadcrumb={[{ label: "Dashboard", href: "/admin" }, { label: "Report Management" }]}>
+      <AdminErrorBanner message={err} onRetry={() => void load()} />
       {stats ? (
         <div className="row g-2 mb-3 small text-muted">
           <div className="col-auto">Total: {stats.total_reports}</div>
@@ -109,8 +115,6 @@ export default function AdminReportsClient() {
           </div>
         </div>
       </div>
-
-      {err ? <div className="alert alert-danger py-2 small">{err}</div> : null}
 
       <div className="card shadow">
         <div className="card-body p-0">

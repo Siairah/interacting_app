@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { resolveMediaFileUrl } from '@/utils/mediaUrl';
 import { PostMedia as PostMediaType } from './types';
 import styles from './PostMedia.module.css';
 
@@ -12,24 +13,33 @@ interface PostMediaProps {
 export default function PostMedia({ mediaFiles, postId }: PostMediaProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const resolved = useMemo(
+    () =>
+      (mediaFiles || []).map((m) => ({
+        ...m,
+        file: resolveMediaFileUrl(m.file),
+      })),
+    [mediaFiles]
+  );
+
   const handlePrev = () => {
-    setActiveIndex((prev) => (prev - 1 + mediaFiles.length) % mediaFiles.length);
+    setActiveIndex((prev) => (prev - 1 + resolved.length) % resolved.length);
   };
 
   const handleNext = () => {
-    setActiveIndex((prev) => (prev + 1) % mediaFiles.length);
+    setActiveIndex((prev) => (prev + 1) % resolved.length);
   };
 
   const handleIndicatorClick = (index: number) => {
     setActiveIndex(index);
   };
 
-  if (!mediaFiles || mediaFiles.length === 0) return null;
+  if (!resolved.length) return null;
 
   return (
     <div className={styles.mediaContainer}>
       <div className={styles.postMediaCarousel} id={`carousel-${postId}`}>
-        {mediaFiles.map((media, index) => (
+        {resolved.map((media, index) => (
           <div 
             key={index} 
             className={`${styles.carouselItem} ${index === activeIndex ? styles.active : ''}`}
@@ -63,7 +73,7 @@ export default function PostMedia({ mediaFiles, postId }: PostMediaProps) {
         ))}
       </div>
 
-      {mediaFiles.length > 1 && (
+      {resolved.length > 1 && (
         <div className={styles.carouselControls}>
           <button 
             className={styles.carouselPrev}
@@ -78,7 +88,7 @@ export default function PostMedia({ mediaFiles, postId }: PostMediaProps) {
             <i className="fas fa-chevron-right"></i>
           </button>
           <div className={styles.carouselIndicators}>
-            {mediaFiles.map((_, index) => (
+            {resolved.map((_, index) => (
               <span 
                 key={index}
                 className={`${styles.indicator} ${index === activeIndex ? styles.active : ''}`}

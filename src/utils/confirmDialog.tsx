@@ -10,7 +10,7 @@ export function confirmDialog(
   cancelText: string = 'Cancel',
   confirmButtonClass: string = ''
 ): Promise<boolean> {
-  return new Promise((resolve) => {
+  return new Promise((resolve) => { 
     const container = document.createElement('div');
     document.body.appendChild(container);
     const root = createRoot(container);

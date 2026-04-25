@@ -8,8 +8,10 @@ export default function AdminGuard({ children }: { children: React.ReactNode }) 
   const [ok, setOk] = useState(false);
 
   useEffect(() => {
-    if (!isAdminAuthenticated() || !getAdminToken()) {
-      if (isAdminAuthenticated() && !getAdminToken()) clearAdminSession();
+    const token = getAdminToken();
+    const flagged = isAdminAuthenticated();
+    if (!flagged || !token) {
+      if (flagged && !token) clearAdminSession();
       router.replace("/");
       return;
     }

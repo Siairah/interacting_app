@@ -345,3 +345,56 @@ textarea.form-control {
   border-radius: 10px;
   cursor: pointer;
 }
+
+@media (max-width: 480px) {
+  .profile-page {
+    padding: max(12px, env(safe-area-inset-top, 0px))
+      max(12px, env(safe-area-inset-right, 0px))
+      max(12px, env(safe-area-inset-bottom, 0px))
+      max(12px, env(safe-area-inset-left, 0px));
+    align-items: flex-start;
+  }
+
+  .profile-card {
+    padding: 20px 16px;
+    border-radius: 14px;
+  }
+
+  .welcome-message h1 {
+    font-size: 22px;
+  }
+
+  .welcome-message p {
+    font-size: 13px;
+  }
+
+  .upload-options {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .gender-options {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .form-control {
+    font-size: 16px;
+  }
+
+  .progress-bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .profile-card {
+    padding: 16px 12px;
+  }
+
+  .welcome-message h1 {
+    font-size: 20px;
+  }
+}

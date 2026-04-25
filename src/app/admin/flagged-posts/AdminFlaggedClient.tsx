@@ -1,11 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import AdminErrorBanner from "@/admin/components/AdminErrorBanner";
 import AdminPthPageFrame from "@/admin/components/AdminPthPageFrame";
 import { adminFlaggedBulk, adminListFlagged, adminReviewFlagged } from "@/admin/managementApi";
+import { useAdminAuthRedirect } from "@/admin/useAdminAuthRedirect";
 import AdminPagination from "../components/AdminPagination";
 
 export default function AdminFlaggedClient() {
+  const tryRedirect = useAdminAuthRedirect();
   const [page, setPage] = useState(1);
   const [pendingOnly, setPendingOnly] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -22,12 +26,14 @@ export default function AdminFlaggedClient() {
       setData(r);
       setSelected(new Set());
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed");
-      setData(null);
+      if (!tryRedirect(e)) {
+        setErr(e instanceof Error ? e.message : "Failed");
+        setData(null);
+      }
     } finally {
       setLoading(false);
     }
-  }, [page, pendingOnly]);
+  }, [page, pendingOnly, tryRedirect]);
 
   useEffect(() => {
     void load();
@@ -40,7 +46,7 @@ export default function AdminFlaggedClient() {
       await adminReviewFlagged(id, action);
       await load();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed");
+      if (!tryRedirect(e)) setErr(e instanceof Error ? e.message : "Failed");
     } finally {
       setBusy(false);
     }
@@ -55,7 +61,7 @@ export default function AdminFlaggedClient() {
       await adminFlaggedBulk(ids, action);
       await load();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Bulk failed");
+      if (!tryRedirect(e)) setErr(e instanceof Error ? e.message : "Bulk failed");
     } finally {
       setBusy(false);
     }
@@ -66,6 +72,11 @@ export default function AdminFlaggedClient() {
 
   return (
     <AdminPthPageFrame title="Flagged Post" breadcrumb={[{ label: "Dashboard", href: "/admin" }, { label: "Flagged Post" }]}>
+      <AdminErrorBanner message={err} onRetry={() => void load()} />
+      <p className="small text-muted mb-3">
+        Items are in the <strong>moderation queue</strong> (e.g. SightEngine). <strong>Risk score</strong> blends auto-flag severity with open user reports on the same post (higher is healthier). Use{" "}
+        <strong>Review</strong> for full post, comments, and reports.
+      </p>
       <div className="card shadow mb-3">
         <div className="card-body py-3 d-flex flex-wrap gap-3 align-items-center">
           <div className="form-check">
@@ -92,8 +103,6 @@ export default function AdminFlaggedClient() {
         </div>
       </div>
 
-      {err ? <div className="alert alert-danger py-2 small">{err}</div> : null}
-
       <div className="card shadow">
         <div className="card-body p-0">
           <div className="table-responsive">
@@ -111,23 +120,26 @@ export default function AdminFlaggedClient() {
                     />
                   </th>
                   <th>Reason</th>
+                  <th>Risk</th>
+                  <th>Rep</th>
+                  <th>Circle</th>
                   <th>Post</th>
                   <th>Author</th>
                   <th>Reviewed</th>
                   <th>Date</th>
-                  <th />
+                  <th style={{ minWidth: 120 }} />
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-4 text-muted">
+                    <td colSpan={10} className="text-center py-4 text-muted">
                       Loading…
                     </td>
                   </tr>
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-4 text-muted">
+                    <td colSpan={10} className="text-center py-4 text-muted">
                       No items
                     </td>
                   </tr>
@@ -147,6 +159,13 @@ export default function AdminFlaggedClient() {
                         />
                       </td>
                       <td className="small">{row.reason}</td>
+                      <td className="small">
+                        <span className="badge text-bg-light border" title="0–100, higher is safer">
+                          {row.risk_score != null ? Math.round(row.risk_score) : "—"}
+                        </span>
+                      </td>
+                      <td className="small">{row.open_reports ?? 0}</td>
+                      <td className="small">{row.circleName || "—"}</td>
                       <td className="small" style={{ maxWidth: 180 }}>
                         {row.postPreview}
                       </td>
@@ -154,6 +173,11 @@ export default function AdminFlaggedClient() {
                       <td>{row.reviewed_by_admin ? "Y" : "N"}</td>
                       <td className="small">{new Date(row.createdAt).toLocaleString()}</td>
                       <td className="d-flex flex-column gap-1">
+                        {row.postId ? (
+                          <Link className="btn btn-sm" style={{ borderColor: "#667eea", color: "#5a67d8" }} href={`/admin/posts?inspect=${row.postId}`}>
+                            Review
+                          </Link>
+                        ) : null}
                         <button
                           type="button"
                           className="btn btn-outline-success btn-sm"

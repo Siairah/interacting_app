@@ -1,12 +1,18 @@
 .container {
-  min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8eaf6 100%);
+}
+
+@media (min-width: 769px) {
+  .container {
+    min-height: 100vh;
+  }
 }
 
 .content {
   max-width: 1200px;
   margin: 0 auto;
   padding: 100px 20px 40px;
+  overscroll-behavior: auto;
 }
 
 .pageHeader {
@@ -495,7 +501,8 @@
 
 @media (max-width: 768px) {
   .content {
-    padding: 90px 15px 30px;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 15px
+      var(--app-mobile-nav-pad, calc(68px + env(safe-area-inset-bottom, 0px))) 15px;
   }
 
   .pageHeader {
@@ -556,7 +563,9 @@
   }
 
   .tableWrapper {
-    overflow-x: scroll;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
 
   .dataTable {
@@ -584,7 +593,8 @@
 
 @media (max-width: 576px) {
   .content {
-    padding: 80px 10px 20px;
+    padding: max(10px, env(safe-area-inset-top, 0px)) 10px
+      var(--app-mobile-nav-pad, calc(68px + env(safe-area-inset-bottom, 0px))) 10px;
   }
 
   .pageTitle {
@@ -615,5 +625,26 @@
 
   .dataTable {
     min-width: 500px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    min-height: 100dvh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .content {
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .loadingContainer,
+  .errorContainer {
+    min-height: 100dvh;
+    padding-bottom: var(--app-mobile-nav-pad);
   }
 }

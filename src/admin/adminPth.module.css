@@ -1,45 +1,71 @@
-/* Mirrors PTH Django `base.html` + `admin_base.html` admin shell */
+/* Chautari admin shell — matches user app accent (#667eea / #764ba2) */
 
 .root {
-  min-height: 100vh;
-  padding-top: 70px;
-  background: #f8f9fa;
+  --admin-brand-from: #667eea;
+  --admin-brand-to: #764ba2;
+  --admin-sidebar-bg: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  --admin-sidebar-active: rgba(102, 126, 234, 0.22);
+  --admin-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --admin-text-muted: #64748b;
+
+  box-sizing: border-box;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding-top: 64px;
+  background: #f1f5f9;
 }
 
 .topNavbar {
-  background: rgba(106, 20, 235, 0.95) !important;
+  background: linear-gradient(135deg, var(--admin-brand-from) 0%, var(--admin-brand-to) 100%) !important;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  height: 70px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 64px;
+  box-shadow: 0 4px 24px rgba(102, 126, 234, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .navbarBrand {
   font-weight: 700;
-  font-size: 1.4rem;
-  letter-spacing: -0.5px;
+  font-size: 1.25rem;
+  letter-spacing: -0.03em;
   color: #fff !important;
   text-decoration: none;
 }
 
 .navbarBrand i {
   margin-right: 10px;
+  opacity: 0.95;
+}
+
+.superadminBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35);
 }
 
 .belowNav {
   display: flex;
-  min-height: calc(100vh - 70px);
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
 }
 
 .sidebar {
   width: 260px;
   flex-shrink: 0;
-  background: #212529 !important;
-  min-height: calc(100vh - 70px);
+  background: var(--admin-sidebar-bg) !important;
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.06);
 }
 
 .sidebarInner {
@@ -53,49 +79,69 @@
   display: flex;
   align-items: center;
   font-weight: 500;
-  color: #fff !important;
-  padding: 0.75rem 1rem;
+  color: #e2e8f0 !important;
+  padding: 0.65rem 1rem;
   text-decoration: none;
   transition: color 0.2s ease, background 0.2s ease;
   border: none;
   background: none;
   width: 100%;
   text-align: left;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   font-family: inherit;
+  border-radius: 0.375rem;
+  margin: 0 0.35rem;
+  width: calc(100% - 0.7rem);
 }
 
 .navLink:hover {
-  color: #0d6efd !important;
-  background: rgba(255, 255, 255, 0.05);
+  color: #fff !important;
+  background: var(--admin-sidebar-hover);
 }
 
 .navLinkActive {
-  color: #0d6efd !important;
-  background: rgba(255, 255, 255, 0.1);
+  color: #fff !important;
+  background: var(--admin-sidebar-active);
+  box-shadow: inset 3px 0 0 var(--admin-brand-from);
 }
 
 .navLink i {
-  margin-right: 8px;
+  margin-right: 10px;
   width: 20px;
   text-align: center;
+  color: #94a3b8;
+}
+
+.navLinkActive i {
+  color: #c4b5fd;
 }
 
 .exitLink {
-  color: #dc3545 !important;
+  color: #fca5a5 !important;
   margin-top: 1rem;
 }
 
 .exitLink:hover {
-  color: #ff6b6b !important;
+  color: #fecaca !important;
+  background: rgba(239, 68, 68, 0.12) !important;
 }
 
 .main {
   flex: 1;
   min-width: 0;
-  padding: 0 1rem 2rem;
-  background: #f8f9fa;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0.75rem 1.5rem;
+  background: #f1f5f9;
+}
+
+@media (min-width: 576px) {
+  .main {
+    padding: 0 1rem 2rem;
+  }
 }
 
 @media (min-width: 768px) {
@@ -113,12 +159,95 @@
   padding-top: 1rem;
   padding-bottom: 0.5rem;
   margin-bottom: 1rem;
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .pageH2 {
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
-  color: #333;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 575.98px) {
+  .pageH2 {
+    font-size: 1.2rem;
+    line-height: 1.3;
+  }
+
+  .pageHeadingRow {
+    padding-top: 0.65rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* Wide data tables: horizontal scroll on phones/tablets (avoid crushed columns) */
+@media (max-width: 991.98px) {
+  .root :global(.table-responsive) {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .root :global(.table-responsive .table) {
+    min-width: 640px;
+  }
+}
+
+/* Bootstrap primary → brand gradient inside admin */
+.root :global(.btn-primary) {
+  background: linear-gradient(135deg, var(--admin-brand-from) 0%, var(--admin-brand-to) 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.35);
+}
+
+.root :global(.btn-primary:hover),
+.root :global(.btn-primary:focus) {
+  filter: brightness(1.06);
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.45);
+}
+
+.root :global(.btn-outline-primary) {
+  color: var(--admin-brand-from);
+  border-color: var(--admin-brand-from);
+  background: #fff;
+}
+
+.root :global(.btn-outline-primary:hover) {
+  background: linear-gradient(135deg, var(--admin-brand-from) 0%, var(--admin-brand-to) 100%);
+  border-color: transparent;
+  color: #fff;
+}
+
+.root :global(.card) {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
+
+.root :global(.card.shadow) {
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06) !important;
+}
+
+.root :global(.form-control:focus),
+.root :global(.form-select:focus) {
+  border-color: var(--admin-brand-from);
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.2);
+}
+
+/* Easier taps on phones (pagination, icon buttons) */
+@media (max-width: 575.98px) {
+  .root :global(.pagination .page-link) {
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+.root :global(.breadcrumb) {
+  font-size: 0.875rem;
+  flex-wrap: wrap;
+  word-break: break-word;
 }

@@ -13,7 +13,7 @@
 }
 
 .borderLeftPrimary {
-  border-left: 0.25rem solid #4e73df !important;
+  border-left: 0.25rem solid #667eea !important;
 }
 
 .borderLeftSuccess {
@@ -32,12 +32,34 @@
   margin: 0;
   font-size: 0.95rem;
   font-weight: 700;
-  color: #4e73df;
+  color: #667eea;
 }
 
 .chartWrap {
   position: relative;
-  min-height: 280px;
+  width: 100%;
+  min-height: 240px;
+  height: min(420px, 50vh);
+  max-height: 55vh;
+}
+
+@media (max-width: 575.98px) {
+  .chartWrap {
+    min-height: 200px;
+    height: min(280px, 42vh);
+    max-height: 48vh;
+  }
+
+  .cardTitlePrimary {
+    font-size: 0.85rem;
+  }
+}
+
+/* Content wrapper: main column scrolls; this block must not trap overflow */
+.dashboardScroll {
+  width: 100%;
+  min-height: min-content;
+  padding-bottom: 2rem;
 }
 
 .alertBox {

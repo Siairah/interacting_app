@@ -16,6 +16,11 @@ interface CommentsSectionProps {
   isInModal?: boolean;
   /** When false, modal does not render the extra "Comments" row (e.g. CommentModal already has a title). */
   showCommentsHeadingInModal?: boolean;
+  /**
+   * When true with isInModal: no inner scroll trap — parent modal body scrolls as one column
+   * (post + comments + input). Better for long posts in circles.
+   */
+  unifiedModalScroll?: boolean;
 }
 
 export default function CommentsSection({
@@ -27,21 +32,13 @@ export default function CommentsSection({
   isLoading = false,
   isInModal = false,
   showCommentsHeadingInModal = true,
+  unifiedModalScroll = false,
 }: CommentsSectionProps) {
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [showMoreComments, setShowMoreComments] = useState(false);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const commentsEndRef = useRef<HTMLDivElement>(null);
-
-  // Debug: Log userId to help troubleshoot
-  useEffect(() => {
-    if (userId) {
-      console.log('✅ CommentsSection received userId:', userId);
-    } else {
-      console.log('⚠️ CommentsSection: No userId provided');
-    }
-  }, [userId]);
 
   // Ensure comments array exists
   const safeComments = comments || [];
@@ -148,9 +145,16 @@ export default function CommentsSection({
     </>
   );
 
+  const modalModeClass =
+    isInModal && unifiedModalScroll
+      ? styles.commentsSectionModalUnified
+      : isInModal
+        ? styles.commentsSectionModal
+        : '';
+
   return (
     <div
-      className={`${styles.commentsSection} ${isInModal ? styles.commentsSectionModal : ''} ${
+      className={`${styles.commentsSection} ${modalModeClass} ${
         isInModal && !showCommentsHeadingInModal ? styles.commentsSectionModalCompact : ''
       }`}
     >
@@ -183,7 +187,7 @@ export default function CommentsSection({
         </div>
       )}
 
-      {isInModal ? (
+      {isInModal && !unifiedModalScroll ? (
         <div className={styles.commentsMainArea}>{commentsMiddle}</div>
       ) : (
         commentsMiddle

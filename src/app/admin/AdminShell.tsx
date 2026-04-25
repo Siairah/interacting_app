@@ -82,9 +82,11 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           >
             <i className="fas fa-bars" />
           </button>
-          <Link className={`navbar-brand ${styles.navbarBrand}`} href="/admin">
+          <Link className={`navbar-brand ${styles.navbarBrand} text-truncate flex-shrink-1 me-1`} style={{ maxWidth: "min(52vw, 220px)" }} href="/admin">
             <i className="fas fa-shield-alt d-none d-sm-inline" aria-hidden />
-            Chautari Admin
+            <span className="d-none d-sm-inline">Chautari Admin</span>
+            <span className="d-sm-none">Admin</span>
+            <span className={`badge rounded-pill ms-1 ms-md-2 d-none d-md-inline ${styles.superadminBadge}`}>Superadmin</span>
           </Link>
           <button
             className="navbar-toggler d-lg-none"

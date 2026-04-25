@@ -1,9 +1,14 @@
 /* Circle Management Page - Modern Design */
 
 .container {
-  min-height: 100vh;
   background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f0f4f8 100%);
   overflow-x: hidden;
+}
+
+@media (min-width: 769px) {
+  .container {
+    min-height: 100vh;
+  }
 }
 
 /* Content */
@@ -16,6 +21,7 @@
   overflow-x: hidden;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: auto;
   transition: padding-top 0.2s ease-in-out;
 }
 
@@ -121,6 +127,10 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.manageUpper {
+  display: block;
 }
 
 .pageHeader {
@@ -639,10 +649,6 @@
     font-size: 12px;
   }
 
-  .content {
-    padding: 70px 12px 30px;
-  }
-
   .statsGrid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
@@ -1043,8 +1049,16 @@
   }
 
   .content {
-    padding: 65px 8px 24px;
+    padding: max(10px, env(safe-area-inset-top, 0px)) 8px
+      var(--app-mobile-nav-pad, calc(68px + env(safe-area-inset-bottom, 0px))) 8px;
     max-width: 100%;
+  }
+
+  .scrollToTopBtn {
+    bottom: calc(var(--app-mobile-nav-height, 68px) + 10px);
+    right: 12px;
+    width: 44px;
+    height: 44px;
   }
 
   .statsGrid {
@@ -1131,6 +1145,7 @@
     gap: 3px;
     flex: 0 1 calc(50% - 2px);
     border-radius: 8px;
+    min-height: 44px;
   }
 
   .tabBtn i {
@@ -1398,6 +1413,14 @@
 .tabBtn.active .badge {
   background: white;
   color: #667eea;
+}
+
+.tabDesktopOnly {
+  display: inline;
+}
+
+.tabMobileOnly {
+  display: none;
 }
 
 /* Tab Content */
@@ -1879,17 +1902,15 @@
 
 @media (max-width: 768px) {
   .content {
-    padding: 70px 12px 20px;
+    padding: max(12px, env(safe-area-inset-top, 0px)) 12px
+      var(--app-mobile-nav-pad, calc(68px + env(safe-area-inset-bottom, 0px))) 12px;
   }
 
-  .tabNavigation {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .tabBtn {
-    width: 100%;
-    justify-content: center;
+  .scrollToTopBtn {
+    bottom: calc(var(--app-mobile-nav-height, 68px) + 12px);
+    right: 16px;
+    width: 46px;
+    height: 46px;
   }
 
   .statsGrid {
@@ -1917,6 +1938,25 @@
   .sectionHeader {
     flex-direction: column;
     gap: 15px;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .headerActions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .visibilityBtn,
+  .backLink {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
   }
 }
 
@@ -2263,5 +2303,133 @@
   font-size: 20px;
   font-weight: 600;
   color: #2c3e50;
+}
+
+@media (max-width: 768px) {
+  .container {
+    min-height: 100dvh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .content {
+    min-height: auto;
+    overflow-y: visible;
+    max-height: none;
+  }
+
+  .loadingContainer,
+  .errorContainer {
+    min-height: 100dvh;
+    padding-bottom: var(--app-mobile-nav-pad);
+  }
+}
+
+/* Mobile: horizontal scroll tab strip + compact labels (overrides earlier stacked/wrapped tab rules) */
+@media (max-width: 768px) {
+  .manageUpper {
+    display: none;
+  }
+
+  .tabDesktopOnly {
+    display: none;
+  }
+
+  .tabMobileOnly {
+    display: inline;
+  }
+
+  .tabNavigation {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px 12px;
+    margin: 0 0 20px;
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    scroll-snap-type: x proximity;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    position: sticky;
+    top: max(6px, env(safe-area-inset-top, 0px));
+    z-index: 15;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.97) 0%,
+      rgba(255, 255, 255, 0.92) 100%
+    );
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+    border: 1px solid rgba(102, 126, 234, 0.12);
+  }
+
+  .tabNavigation::-webkit-scrollbar {
+    height: 5px;
+  }
+
+  .tabNavigation::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.35);
+    border-radius: 5px;
+  }
+
+  .tabBtn {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: auto;
+    max-width: none;
+    scroll-snap-align: start;
+    padding: 11px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: 11px;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  .tabBtn i {
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .tabContent {
+    padding: 18px 16px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 576px) {
+  .tabNavigation {
+    gap: 6px;
+    padding: 8px 10px 10px;
+    margin-left: -2px;
+    margin-right: -2px;
+  }
+
+  .tabBtn {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .tabBtn i {
+    font-size: 13px;
+  }
+
+  .badge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
 }
 

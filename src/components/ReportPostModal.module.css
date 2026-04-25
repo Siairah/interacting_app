@@ -47,6 +47,44 @@
   }
 }
 
+.modalHeaderCompact {
+  display: none;
+}
+
+.modalTitleCompact {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3436;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modalTitleCompact i {
+  color: #667eea;
+}
+
+.closeButtonCompact {
+  background: #f1f3f5;
+  border: none;
+  color: #495057;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+}
+
+.closeButtonCompact:hover {
+  background: #e9ecef;
+}
+
 .modalHeader {
   display: flex;
   align-items: center;
@@ -336,19 +374,40 @@
   }
 
   .modalHeader {
-    padding: 16px 20px;
+    display: none;
+  }
+
+  .modalHeaderCompact {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e9ecef;
+    background: #fff;
+    flex-shrink: 0;
   }
 
   .modalTitle {
     font-size: 1.25rem;
   }
 
+  .postPreview {
+    display: none;
+  }
+
   .modalBody {
-    padding: 20px;
+    padding: 16px 16px 20px;
+  }
+
+  .formGroup {
+    margin-bottom: 16px;
   }
 
   .modalFooter {
     flex-direction: column-reverse;
+    padding-top: 16px;
+    margin-top: 12px;
   }
 
   .cancelButton,

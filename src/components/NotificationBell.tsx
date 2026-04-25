@@ -1,9 +1,27 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { getSocket } from "@/utils/socketAuth";
+import { formatNotificationTime, getNotificationIcon } from "@/utils/notificationHelpers";
 import styles from "./NotificationBell.module.css";
+
+const MOBILE_NAV_MQ = "(max-width: 768px)";
+
+function useMobileBottomNav(): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_NAV_MQ);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return isMobile;
+}
 
 interface Notification {
   id: string;
@@ -27,10 +45,16 @@ interface NotificationBellProps {
 
 export default function NotificationBell({ userId }: NotificationBellProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isMobileNav = useMobileBottomNav();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isMobileNav) setShowDropdown(false);
+  }, [isMobileNav]);
 
   useEffect(() => {
     if (!userId) return;
@@ -263,66 +287,26 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'like':
-        return 'fas fa-heart';
-      case 'comment':
-        return 'fas fa-comment';
-      case 'ban':
-        return 'fas fa-ban';
-      case 'restriction':
-        return 'fas fa-user-lock';
-      case 'approval':
-        return 'fas fa-check-circle';
-      case 'rejection':
-        return 'fas fa-times-circle';
-      case 'post_approved':
-        return 'fas fa-check';
-      case 'post_removed':
-        return 'fas fa-trash';
-      case 'post_reported':
-        return 'fas fa-flag';
-      case 'flagged':
-        return 'fas fa-exclamation-triangle';
-      case 'post_flagged_auto':
-        return 'fas fa-flag';
-      case 'warning':
-        return 'fas fa-exclamation-circle';
-      case 'join_request':
-        return 'fas fa-user-plus';
-      case 'new_post':
-        return 'fas fa-file-alt';
-      case 'unban':
-        return 'fas fa-unlock';
-      default:
-        return 'fas fa-bell';
-    }
-  };
-
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    if (minutes > 0) return `${minutes}m ago`;
-    return 'Just now';
-  };
-
   if (!userId) return null;
+
+  const openNotifications = () => {
+    if (isMobileNav) {
+      if (pathname !== "/notifications") {
+        router.push("/notifications");
+      }
+      return;
+    }
+    setShowDropdown((v) => !v);
+  };
 
   return (
     <div className={styles.notificationContainer} ref={dropdownRef}>
       <button
+        type="button"
         className={styles.bellButton}
-        onClick={() => setShowDropdown(!showDropdown)}
+        onClick={openNotifications}
         aria-label="Notifications"
+        aria-expanded={isMobileNav ? undefined : showDropdown}
       >
         <i className="fas fa-bell"></i>
         {unreadCount > 0 && (
@@ -330,12 +314,21 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
         )}
       </button>
 
-      {showDropdown && (
+      {showDropdown && !isMobileNav && (
         <div className={styles.dropdown}>
           <div className={styles.dropdownHeader}>
-            <h3>Notifications</h3>
+            <div className={styles.dropdownHeaderRow}>
+              <h3>Notifications</h3>
+              <Link
+                href="/notifications"
+                className={styles.viewAllLink}
+                onClick={() => setShowDropdown(false)}
+              >
+                View all
+              </Link>
+            </div>
             {unreadCount > 0 && (
-              <button onClick={markAllAsRead} className={styles.markAllRead}>
+              <button type="button" onClick={markAllAsRead} className={styles.markAllRead}>
                 Mark all as read
               </button>
             )}
@@ -360,7 +353,7 @@ export default function NotificationBell({ userId }: NotificationBellProps) {
                   <div className={styles.notificationContent}>
                     <p className={styles.notificationMessage}>{notification.message}</p>
                     <span className={styles.notificationTime}>
-                      {formatTime(notification.created_at)}
+                      {formatNotificationTime(notification.created_at)}
                     </span>
                   </div>
                   {!notification.is_read && <div className={styles.unreadDot}></div>}

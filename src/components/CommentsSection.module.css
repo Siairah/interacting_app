@@ -19,6 +19,14 @@
   overflow: hidden;
 }
 
+/* Parent modal body scrolls; no nested scroll areas */
+.commentsSectionModalUnified {
+  flex: none;
+  min-height: 0;
+  padding: 0 16px 16px;
+  overflow: visible;
+}
+
 /* CommentModal: no duplicate "Comments" sub-heading */
 .commentsSectionModalCompact {
   padding-top: 4px;

@@ -45,8 +45,7 @@ export default function ViewPostModal({
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
-      fetchPostDetails();
-      fetchAllComments();
+      void Promise.all([fetchPostDetails(), fetchAllComments()]);
     }
 
     return () => {
@@ -231,11 +230,8 @@ export default function ViewPostModal({
   }, [isOpen]);
 
   if (!isOpen) {
-    console.log('ViewPostModal: isOpen is false, not rendering');
     return null;
   }
-
-  console.log('ViewPostModal: Rendering modal for post:', post.id);
 
   return (
     <div 
@@ -277,57 +273,53 @@ export default function ViewPostModal({
 
         {/* Modal Body - Post Content + Comments */}
         <div className={styles.modalBody}>
-          {isLoadingPost ? (
-            <div className={styles.loadingState}>
-              <i className="fas fa-spinner fa-spin"></i>
-              <p>Loading post...</p>
+          <>
+            {/* Show feed data immediately (incl. Cloudinary URLs); fetch only refreshes counts */}
+            <div className={styles.postContentSection}>
+              {isLoadingPost ? (
+                <div className={styles.refreshingRow} aria-live="polite">
+                  <i className="fas fa-spinner fa-spin" />
+                  <span>Updating post…</span>
+                </div>
+              ) : null}
+              <PostHeader
+                user={postData.user}
+                createdAt={postData.created_at}
+                circle={postData.circle}
+                showOptions={false}
+              />
+
+              <p className={styles.postCaption}>{postData.content}</p>
+
+              {postData.media_files && postData.media_files.length > 0 && (
+                <PostMedia mediaFiles={postData.media_files} postId={postData.id} />
+              )}
+
+              <PostActions
+                postId={postData.id}
+                likeCount={postData.like_count}
+                userLiked={postData.user_liked}
+                commentCount={postData.comment_count}
+                recentLikers={postData.recent_likers || []}
+                onLike={() => handleLike(postData.id)}
+                onShowLikers={() => {}}
+                onCommentClick={() => {}}
+              />
             </div>
-          ) : (
-            <>
-              {/* Post Content */}
-              <div className={styles.postContentSection}>
-                <PostHeader 
-                  user={postData.user}
-                  createdAt={postData.created_at}
-                  circle={postData.circle}
-                  showOptions={false}
-                />
-                
-                <p className={styles.postCaption}>{postData.content}</p>
 
-                {postData.media_files && postData.media_files.length > 0 && (
-                  <PostMedia 
-                    mediaFiles={postData.media_files}
-                    postId={postData.id}
-                  />
-                )}
-
-                <PostActions
-                  postId={postData.id}
-                  likeCount={postData.like_count}
-                  userLiked={postData.user_liked}
-                  commentCount={postData.comment_count}
-                  recentLikers={postData.recent_likers || []}
-                  onLike={() => handleLike(postData.id)}
-                  onShowLikers={() => {}}
-                  onCommentClick={() => {}}
-                />
-              </div>
-
-              {/* Comments Section */}
-              <div className={styles.commentsWrapper}>
-                <CommentsSection
-                  postId={postData.id}
-                  comments={comments}
-                  userId={userId}
-                  onCommentAdded={handleCommentAdded}
-                  initialShowLimit={50}
-                  isInModal={true}
-                  isLoading={isLoadingComments}
-                />
-              </div>
-            </>
-          )}
+            <div className={styles.commentsWrapper}>
+              <CommentsSection
+                postId={postData.id}
+                comments={comments}
+                userId={userId}
+                onCommentAdded={handleCommentAdded}
+                initialShowLimit={50}
+                isInModal={true}
+                unifiedModalScroll
+                isLoading={isLoadingComments}
+              />
+            </div>
+          </>
         </div>
       </div>
     </div>

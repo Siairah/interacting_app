@@ -1,11 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Chart, registerables } from "chart.js";
 import { fetchAdminDashboard, type AdminDashboardPayload } from "@/admin/adminApi";
-import { clearAdminSession } from "@/admin/auth";
+import AdminErrorBanner from "@/admin/components/AdminErrorBanner";
+import { useAdminAuthRedirect } from "@/admin/useAdminAuthRedirect";
 import shellStyles from "@/admin/adminPth.module.css";
 import dashStyles from "@/admin/pthDashboard.module.css";
 
@@ -35,7 +34,7 @@ function clampPct(n: number): number {
 }
 
 export default function AdminDashboardClient() {
-  const router = useRouter();
+  const tryRedirect = useAdminAuthRedirect();
   const chartRef = useRef<Chart | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -50,17 +49,17 @@ export default function AdminDashboardClient() {
       const payload = await fetchAdminDashboard();
       setData(payload);
     } catch (e) {
+      if (tryRedirect(e)) {
+        setData(null);
+        return;
+      }
       const msg = e instanceof Error ? e.message : "Failed to load stats";
       setError(msg);
       setData(null);
-      if (/expired|authentication required|invalid or expired|admin session/i.test(msg)) {
-        clearAdminSession();
-        router.replace("/");
-      }
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [tryRedirect]);
 
   useEffect(() => {
     void load();
@@ -83,7 +82,7 @@ export default function AdminDashboardClient() {
           {
             label: "New Users",
             data: user_trend,
-            borderColor: "rgb(78, 115, 223)",
+            borderColor: "rgb(102, 126, 234)",
             tension: 0.1,
           },
           {
@@ -125,25 +124,15 @@ export default function AdminDashboardClient() {
   const g = data?.growth_rates;
 
   return (
-    <>
+    <div className={dashStyles.dashboardScroll}>
       <div className={shellStyles.pageHeadingRow}>
         <h1 className={`h2 ${shellStyles.pageH2}`}>Admin Dashboard</h1>
       </div>
 
-      {error ? (
-        <div className={dashStyles.alertBox} role="alert">
-          <span>{error}</span>
-          <div className="d-flex gap-2">
-            <Link href="/">Log in again</Link>
-            <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => void load()}>
-              Retry
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <AdminErrorBanner message={error} onRetry={() => void load()} />
 
-      <div className="row">
-        <div className="col-xl-3 col-md-6 mb-4">
+      <div className="row g-3">
+        <div className="col-6 col-xl-3 col-md-6">
           <div className={`card shadow h-100 py-2 ${dashStyles.borderLeftPrimary}`}>
             <div className="card-body">
               <div className="row g-0 align-items-center">
@@ -166,7 +155,7 @@ export default function AdminDashboardClient() {
           </div>
         </div>
 
-        <div className="col-xl-3 col-md-6 mb-4">
+        <div className="col-6 col-xl-3 col-md-6">
           <div className={`card shadow h-100 py-2 ${dashStyles.borderLeftSuccess}`}>
             <div className="card-body">
               <div className="row g-0 align-items-center">
@@ -189,7 +178,7 @@ export default function AdminDashboardClient() {
           </div>
         </div>
 
-        <div className="col-xl-3 col-md-6 mb-4">
+        <div className="col-6 col-xl-3 col-md-6">
           <div className={`card shadow h-100 py-2 ${dashStyles.borderLeftInfo}`}>
             <div className="card-body">
               <div className="row g-0 align-items-center">
@@ -238,9 +227,9 @@ export default function AdminDashboardClient() {
         </div>
       </div>
 
-      <div className="row">
-        <div className="col-xl-8 col-lg-7 mb-4">
-          <div className="card shadow mb-4">
+      <div className="row g-3">
+        <div className="col-12 col-xl-8 col-lg-7">
+          <div className="card shadow mb-0 mb-lg-4 h-100">
             <div className="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white">
               <h6 className={`m-0 ${dashStyles.cardTitlePrimary}`}>Activity Trends (Last 7 Days)</h6>
             </div>
@@ -251,8 +240,8 @@ export default function AdminDashboardClient() {
             </div>
           </div>
         </div>
-        <div className="col-xl-4 col-lg-5 mb-4">
-          <div className="card shadow mb-4">
+        <div className="col-12 col-xl-4 col-lg-5">
+          <div className="card shadow mb-4 h-100">
             <div className="card-header py-3 bg-white">
               <h6 className={`m-0 ${dashStyles.cardTitlePrimary}`}>Daily Growth</h6>
             </div>
@@ -298,9 +287,9 @@ export default function AdminDashboardClient() {
         </div>
       </div>
 
-      <div className="row">
-        <div className="col-lg-6 mb-4">
-          <div className="card shadow">
+      <div className="row g-3">
+        <div className="col-12 col-lg-6">
+          <div className="card shadow h-100">
             <div className="card-header py-3 bg-white">
               <h6 className={`m-0 ${dashStyles.cardTitlePrimary}`}>Latest Posts</h6>
             </div>
@@ -311,8 +300,8 @@ export default function AdminDashboardClient() {
                 data?.recent_activity.latest_posts.map((post, idx, arr) => (
                   <div key={post.id} className="mb-3">
                     <div className={`small ${dashStyles.textGray500}`}>{formatDateTime(post.createdAt)}</div>
-                    <div>{post.content || "(no text)"}</div>
-                    <div className="small">by {post.authorLabel}</div>
+                    <div className="text-break">{post.content || "(no text)"}</div>
+                    <div className="small text-break">by {post.authorLabel}</div>
                     {idx < arr.length - 1 ? <hr /> : null}
                   </div>
                 ))
@@ -320,8 +309,8 @@ export default function AdminDashboardClient() {
             </div>
           </div>
         </div>
-        <div className="col-lg-6 mb-4">
-          <div className="card shadow">
+        <div className="col-12 col-lg-6">
+          <div className="card shadow h-100">
             <div className="card-header py-3 bg-white">
               <h6 className={`m-0 ${dashStyles.cardTitlePrimary}`}>Recent Reports</h6>
             </div>
@@ -332,8 +321,8 @@ export default function AdminDashboardClient() {
                 data?.recent_activity.latest_reports.map((report, idx, arr) => (
                   <div key={report.id} className="mb-3">
                     <div className={`small ${dashStyles.textGray500}`}>{formatDateTime(report.createdAt)}</div>
-                    <div>{report.reason}</div>
-                    <div className="small">reported by {report.reporterLabel}</div>
+                    <div className="text-break">{report.reason}</div>
+                    <div className="small text-break">reported by {report.reporterLabel}</div>
                     {idx < arr.length - 1 ? <hr /> : null}
                   </div>
                 ))
@@ -342,6 +331,6 @@ export default function AdminDashboardClient() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

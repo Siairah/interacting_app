@@ -1435,7 +1435,9 @@
 .contentTabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
     margin: -0.25rem 0 1.25rem;
     padding: 0.5rem 0 0.85rem;
     position: sticky;
@@ -1445,6 +1447,38 @@
     border-bottom: 1px solid rgba(102, 126, 234, 0.12);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     transition: top 0.3s ease;
+}
+
+.contentTabsGroup {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    align-items: center;
+}
+
+.createPostTabAction {
+    padding: 0.65rem 1.25rem;
+    background: linear-gradient(135deg, #6a14eb 0%, #4000b0 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(106, 20, 235, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.createPostTabAction:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(106, 20, 235, 0.45);
 }
 
 @media (min-width: 993px) {

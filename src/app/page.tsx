@@ -44,17 +44,25 @@ function LoginPageContent() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    const { isValidEmailFormat } = await import('@/utils/emailValidation');
+    const emailTrimmed = email.trim();
+    if (!isValidEmailFormat(emailTrimmed)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const { isAdminEmailPassword, setAdminSession } = await import('@/admin/auth');
-      if (isAdminEmailPassword(email, password)) {
+      if (isAdminEmailPassword(emailTrimmed, password)) {
         const { getApiUrl, safeJson } = await import('@/utils/apiUtils');
         const adminRes = await fetch(`${getApiUrl()}/admin/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim(), password }),
+          body: JSON.stringify({ email: emailTrimmed, password }),
         });
         const adminData = await safeJson<{ success?: boolean; token?: string; message?: string }>(adminRes);
         if (!adminRes.ok || !adminData.success || !adminData.token) {
@@ -69,7 +77,7 @@ function LoginPageContent() {
       const res = await fetch(`${getApiUrl()}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: emailTrimmed, password }),
       });
 
       const { safeJson } = await import('@/utils/apiUtils');

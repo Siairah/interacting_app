@@ -3,6 +3,7 @@
 import Head from 'next/head';
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { isRegistrationOtpExpired } from '@/utils/otpExpiry';
 import styles from './verify-otp.module.css';
 
 function VerifyOtpContent() {
@@ -91,9 +92,7 @@ function VerifyOtpContent() {
         return;
       }
       
-      // Check if OTP is not expired
-      const otpExpiresAt = new Date(userData.otpExpiresAt);
-      if (otpExpiresAt < new Date()) {
+      if (isRegistrationOtpExpired(userData.otpExpiresAt)) {
         setError('OTP expired. Please sign up again.');
         localStorage.removeItem('pendingUserData');
         return;

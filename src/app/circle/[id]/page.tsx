@@ -904,18 +904,35 @@ function CircleDetailPageContent() {
 
           <div className={styles.circleMainContent}>
             <div className={styles.contentTabs}>
-              <button
-                className={`${styles.tabBtn} ${activeTab === 'posts' ? styles.tabActive : ''}`}
-                onClick={() => setActiveTab('posts')}
-              >
-                <i className="fas fa-comments"></i> Posts
-              </button>
-              <button
-                className={`${styles.tabBtn} ${activeTab === 'events' ? styles.tabActive : ''}`}
-                onClick={() => setActiveTab('events')}
-              >
-                <i className="fas fa-calendar-alt"></i> Events
-              </button>
+              <div className={styles.contentTabsGroup}>
+                <button
+                  className={`${styles.tabBtn} ${activeTab === 'posts' ? styles.tabActive : ''}`}
+                  onClick={() => setActiveTab('posts')}
+                >
+                  <i className="fas fa-comments"></i> Posts
+                </button>
+                <button
+                  className={`${styles.tabBtn} ${activeTab === 'events' ? styles.tabActive : ''}`}
+                  onClick={() => setActiveTab('events')}
+                >
+                  <i className="fas fa-calendar-alt"></i> Events
+                </button>
+              </div>
+              {circle &&
+                (circle.is_member || circle.visibility !== 'private') &&
+                !circle.is_restricted &&
+                !circle.is_banned && (
+                  <button
+                    type="button"
+                    className={styles.createPostTabAction}
+                    onClick={() => {
+                      setActiveTab('posts');
+                      setShowCreatePost(true);
+                    }}
+                  >
+                    <i className="fas fa-plus"></i> Create Post
+                  </button>
+                )}
             </div>
 
             <div className={styles.circleMainScroll}>

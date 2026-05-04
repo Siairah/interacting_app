@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { validatePasswordStrength } from "@/utils/passwordValidation";
 import styles from "./reset-password.module.css";
 
 function ResetPasswordPageContent() {
@@ -23,26 +24,7 @@ function ResetPasswordPageContent() {
     }
   }, [email, router]);
 
-  const validatePassword = (password: string) => {
-    const minLength = password.length >= 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-    return {
-      isValid: minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar,
-      errors: {
-        minLength: !minLength ? "At least 8 characters" : "",
-        hasUpperCase: !hasUpperCase ? "One uppercase letter" : "",
-        hasLowerCase: !hasLowerCase ? "One lowercase letter" : "",
-        hasNumbers: !hasNumbers ? "One number" : "",
-        hasSpecialChar: !hasSpecialChar ? "One special character" : "",
-      }
-    };
-  };
-
-  const passwordValidation = validatePassword(password);
+  const passwordValidation = validatePasswordStrength(password);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

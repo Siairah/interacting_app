@@ -1,8 +1,9 @@
 "use client";
 
 import Head from 'next/head';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { birthDateInputBounds, validateBirthDate } from '@/utils/dobValidation';
 import styles from './profile-setup.module.css';
 
 export default function ProfileSetup() {
@@ -22,6 +23,8 @@ export default function ProfileSetup() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const dobBounds = useMemo(() => birthDateInputBounds(), []);
 
   // Get email from localStorage on component mount
   useEffect(() => {
@@ -139,6 +142,11 @@ export default function ProfileSetup() {
     }
     if (!dob) {
       setError('Date of birth is required');
+      return;
+    }
+    const dobCheck = validateBirthDate(dob);
+    if (!dobCheck.ok) {
+      setError(dobCheck.message);
       return;
     }
     if (!gender) {
@@ -349,8 +357,13 @@ export default function ProfileSetup() {
                 className={styles['form-control']} 
                 value={dob} 
                 onChange={e => setDob(e.target.value)}
+                min={dobBounds.min}
+                max={dobBounds.max}
                 required
               />
+              <small className={styles.fieldHint}>
+                You must be at least 16. Dates after today are not allowed.
+              </small>
             </div>
 
             {/* Gender Selection */}

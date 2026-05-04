@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useRef, useState, useEffect, useMemo } from 'react';
 import Navigation from '@/components/Navigation';
+import { birthDateInputBounds, validateBirthDate } from '@/utils/dobValidation';
 import styles from './profile.module.css';
 
 interface UserProfile {
@@ -94,6 +95,8 @@ export default function ProfilePage() {
   
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const profilePicInputRef = useRef<HTMLInputElement | null>(null);
+
+  const dobInputBounds = useMemo(() => birthDateInputBounds(), []);
 
   useEffect(() => {
     // Add class to body/html for background styling
@@ -359,7 +362,18 @@ export default function ProfilePage() {
       setError('Full name is required');
       return;
     }
-    
+
+    const resolvedDob = (editDob || user?.dob?.split('T')[0] || '').trim();
+    if (!resolvedDob) {
+      setError('Date of birth is required');
+      return;
+    }
+    const dobValidation = validateBirthDate(resolvedDob);
+    if (!dobValidation.ok) {
+      setError(dobValidation.message);
+      return;
+    }
+
     setSaving(true);
     
     try {
@@ -1086,8 +1100,14 @@ export default function ProfilePage() {
                   type="date"
                   className={styles.formInput}
                   value={editDob}
+                  min={dobInputBounds.min}
+                  max={dobInputBounds.max}
                   onChange={(e) => setEditDob(e.target.value)}
+                  required
                 />
+                <small className={styles.helpText}>
+                  Must be at least 16 years old. Cannot be a future date.
+                </small>
               </div>
 
               {/* Gender */}
